@@ -1,16 +1,13 @@
-// Bundling the fork into something Moodle can load.
+// Bundling the player into something Moodle can load.
 //
-// mod_kaivideo next door has a build script that copies amd/src to amd/build,
-// and for that plugin a copy is a correct build: its sources are plain AMD,
-// so nothing needs transforming. This one cannot do that. The forked code is
-// ES modules — `import Interaction from './interaction'` is the first line of
-// interactive-video.js — and a copied file with an import statement in it
-// loads as a script and fails with a syntax error at the moment a learner
-// opens the activity.
+// The player's source is kaiiv-player/ at the root of this repository — the
+// same code a customer loads outside Moodle — and amd/src/player.js is the
+// Moodle adapter over it. This bundles the two into amd/build/player.min.js.
 //
-// So there is a real bundler here. tests/check_fork.py refuses a build
-// directory containing import statements, which is the specific mistake this
-// file exists to prevent somebody making by hand.
+// A copy would not do, as it does for mod_kaivideo next door: the forked code
+// is ES modules, and a copied file with an import statement in it loads as a
+// script and fails with a syntax error at the moment a learner opens the
+// activity. tests/smoke.js refuses a build containing import statements.
 //
 //     npm install && npm run build
 //
@@ -18,6 +15,10 @@
 // customer installing this plugin has a PHP host and not a node toolchain.
 
 const path = require('path');
+const webpack = require('webpack');
+
+const PLAYER = path.resolve(__dirname, '../../../kaiiv-player');
+const playerPackage = require(path.join(PLAYER, 'package.json'));
 
 module.exports = (env, argv) => ({
     entry: {
@@ -65,24 +66,28 @@ module.exports = (env, argv) => ({
         'core/ajax': 'core/ajax',
         'core/str': 'core/str',
         'core/notification': 'core/notification',
-        // Ours, but not bundled: it makes conditional runtime require() calls
-        // that a bundler would resolve eagerly. See amd/src/h5pcompat.js.
-        'mod_kaiiv/backend': 'mod_kaiiv/backend',
+        // The player imports its slider under this name so that each build
+        // can supply its own: the standalone one bundles jQuery UI's slider,
+        // and this one maps it to the jQuery UI Moodle already loads.
+        'kaiiv-jqueryui': 'jqueryui',
     },
 
     resolve: {
         alias: {
-            // The forked code imports h5p-lib-controls by its npm name. We
-            // vendored it instead of depending on it, because a customer
-            // install has no node_modules — see thirdparty/README.md.
-            //
-            // Aliased rather than rewritten in the forked files: those import
-            // lines are upstream's, and every one we edit is a line that
-            // conflicts the next time we take a patch.
-            'h5p-lib-controls/src/scripts': path.resolve(
-                __dirname, 'amd/src/libcontrols'),
+            // The player, from source. One copy of it in the repository, not
+            // one per system it is used in.
+            'kaiiv-player': path.join(PLAYER, 'src/index.js'),
+            // The forked code imports h5p-lib-controls by its npm name; it is
+            // vendored in the player (see kaiiv-player/thirdparty/README.md).
+            // Aliased rather than rewritten in the forked files, which are
+            // kept as upstream wrote them.
+            'h5p-lib-controls/src/scripts': path.join(PLAYER, 'src/libcontrols'),
         },
     },
+
+    plugins: [
+        new webpack.DefinePlugin({KAIIV_PLAYER_VERSION: JSON.stringify(playerPackage.version)}),
+    ],
 
     module: {
         rules: [

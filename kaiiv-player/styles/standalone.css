@@ -1,0 +1,292 @@
+/*
+ * For pages that are not Moodle.
+ *
+ * Inside Moodle the question cards are drawn with Bootstrap classes — btn,
+ * form-control, card — and the theme styles them, so a question looks like
+ * part of the site it is on. A customer's page has no Bootstrap, or a different
+ * version of it, and without this every button was a bare grey browser button
+ * and every option ran into the next.
+ *
+ * So this is the small part of Bootstrap 5 those classes need, and nothing
+ * else. Every selector is scoped under .kaiiv, so none of it can reach the
+ * rest of the page; a page that already has Bootstrap gets the same look
+ * inside the player either way.
+ *
+ * Only in the standalone build. tools/build-styles.js leaves it out of
+ * mod_kaiiv's styles.css, where the theme already does all of this.
+ *
+ * The icon font is here for the same reason: Moodle ships Font Awesome 6 and
+ * the control icons in kaiiv.css are drawn from it. Font Awesome Free —
+ * fonts under the SIL OFL 1.1; see thirdparty/LICENCE-fontawesome-free.txt.
+ */
+
+@font-face {
+    font-family: "Font Awesome 6 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url("fonts/fa-solid-900.woff2") format("woff2"),
+         url("fonts/fa-solid-900.ttf") format("truetype");
+}
+
+/* Upstream's H5PFontAwesome4, which H5P core would load: the one glyph the
+ * forked CSS asks of it (\f058) is at the same code point in Font Awesome 6. */
+@font-face {
+    font-family: "H5PFontAwesome4";
+    font-style: normal;
+    font-weight: normal;
+    src: url("fonts/fa-solid-900.woff2") format("woff2"),
+         url("fonts/fa-solid-900.ttf") format("truetype");
+}
+
+.kaiiv {
+    --kaiiv-primary: #0f6cbf;
+    --kaiiv-primary-dark: #0c589c;
+    --kaiiv-secondary: #6a737b;
+    --kaiiv-success: #357a32;
+    --kaiiv-danger: #ca3120;
+    --kaiiv-warning: #b35400;
+    --kaiiv-border: #dee2e6;
+    --kaiiv-text: #1d2125;
+    color: var(--kaiiv-text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai",
+        "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+}
+
+.kaiiv *,
+.kaiiv *::before,
+.kaiiv *::after {
+    box-sizing: border-box;
+}
+
+.kaiiv [hidden] {
+    display: none !important;
+}
+
+/* ---- the stage ----------------------------------------------------------- */
+
+.kaiiv .kaiiv-stage {
+    background: #000;
+    margin: 0 auto;
+}
+
+.kaiiv .ratio {
+    position: relative;
+    width: 100%;
+}
+
+.kaiiv .ratio::before {
+    display: block;
+    padding-top: 56.25%;
+    content: "";
+}
+
+.kaiiv .ratio > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.kaiiv .ratio > video {
+    object-fit: contain;
+    background: #000;
+}
+
+/* Over a Vimeo iframe, so its own controls are out of reach. */
+.kaiiv .kaiiv-shield {
+    cursor: default;
+}
+
+/* ---- cards ---------------------------------------------------------------- */
+
+.kaiiv .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--kaiiv-border);
+    border-radius: 0.5rem;
+}
+
+.kaiiv .shadow {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.kaiiv .card-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+
+.kaiiv .lead {
+    font-size: 1.15rem;
+    font-weight: 400;
+}
+
+.kaiiv .img-fluid {
+    max-width: 100%;
+    height: auto;
+}
+
+.kaiiv .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ---- buttons -------------------------------------------------------------- */
+
+.kaiiv .btn {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    color: var(--kaiiv-text);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+
+.kaiiv .btn:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(15, 108, 191, 0.4);
+}
+
+.kaiiv .btn:disabled {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.kaiiv .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+}
+
+.kaiiv .btn-primary {
+    color: #fff;
+    background: var(--kaiiv-primary);
+    border-color: var(--kaiiv-primary);
+}
+
+.kaiiv .btn-primary:hover {
+    background: var(--kaiiv-primary-dark);
+    border-color: var(--kaiiv-primary-dark);
+}
+
+.kaiiv .btn-outline-primary {
+    color: var(--kaiiv-primary);
+    border-color: var(--kaiiv-primary);
+}
+
+.kaiiv .btn-outline-primary:hover,
+.kaiiv .btn-outline-primary.active {
+    color: #fff;
+    background: var(--kaiiv-primary);
+}
+
+.kaiiv .btn-outline-secondary {
+    color: var(--kaiiv-secondary);
+    border-color: var(--kaiiv-secondary);
+}
+
+.kaiiv .btn-outline-secondary:hover,
+.kaiiv .btn-outline-secondary.active {
+    color: #fff;
+    background: var(--kaiiv-secondary);
+}
+
+/* ---- form controls -------------------------------------------------------- */
+
+.kaiiv .form-control {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--kaiiv-text);
+    background: #fff;
+    border: 1px solid #8f959e;
+    border-radius: 0.375rem;
+}
+
+.kaiiv .form-control:focus {
+    outline: 0;
+    border-color: var(--kaiiv-primary);
+    box-shadow: 0 0 0 0.25rem rgba(15, 108, 191, 0.25);
+}
+
+.kaiiv .form-check {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.75em;
+    margin-bottom: 0.25rem;
+}
+
+.kaiiv .form-check-input {
+    float: left;
+    width: 1.1em;
+    height: 1.1em;
+    margin: 0.2em 0 0 -1.75em;
+    accent-color: var(--kaiiv-primary);
+}
+
+.kaiiv .form-check-label {
+    cursor: pointer;
+}
+
+/* ---- messages ------------------------------------------------------------- */
+
+.kaiiv .alert {
+    position: relative;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+}
+
+.kaiiv .alert-warning {
+    color: #664d03;
+    background: #fff3cd;
+    border-color: #ffe69c;
+}
+
+.kaiiv .text-success { color: var(--kaiiv-success) !important; }
+.kaiiv .text-danger { color: var(--kaiiv-danger) !important; }
+.kaiiv .text-warning { color: var(--kaiiv-warning) !important; }
+.kaiiv .text-muted { color: var(--kaiiv-secondary) !important; }
+.kaiiv .text-start { text-align: left !important; }
+
+/* ---- layout helpers ------------------------------------------------------- */
+
+.kaiiv .d-block { display: block !important; }
+.kaiiv .d-grid { display: grid !important; }
+.kaiiv .gap-2 { gap: 0.5rem !important; }
+.kaiiv .flex-fill { flex: 1 1 auto !important; }
+
+@media (min-width: 576px) {
+    .kaiiv .d-sm-flex { display: flex !important; }
+}
+
+.kaiiv .m-0 { margin: 0 !important; }
+.kaiiv .mt-2 { margin-top: 0.5rem !important; }
+.kaiiv .mt-3 { margin-top: 1rem !important; }
+.kaiiv .mb-1 { margin-bottom: 0.25rem !important; }
+.kaiiv .mb-2 { margin-bottom: 0.5rem !important; }
+.kaiiv .mb-3 { margin-bottom: 1rem !important; }
+.kaiiv .me-2 { margin-right: 0.5rem !important; }

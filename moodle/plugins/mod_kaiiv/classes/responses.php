@@ -34,8 +34,19 @@ class responses {
 
         $attempts = self::attempts_so_far($interactionid, $userid);
 
+        // Sent so the engine can refuse, and it has to be able to: the score
+        // reads the latest response, so an answer marked after the last
+        // attempt — or after a correct one, once the answer has been shown —
+        // would replace the one that counted. The web service is callable
+        // directly, so the player not offering another go is no guarantee.
+        $answeredcorrectly = $DB->record_exists('kaiiv_response', [
+            'interactionid' => $interactionid,
+            'userid' => $userid,
+            'correct' => 1,
+        ]);
+
         $verdict = engine::judge($interaction, $response, $attempts,
-            timeline::rules($activity));
+            timeline::rules($activity), $answeredcorrectly);
 
         if (empty($verdict['ok'])) {
             // Nothing is written. A response the engine could not mark is not

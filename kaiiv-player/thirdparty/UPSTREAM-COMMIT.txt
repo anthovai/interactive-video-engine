@@ -1,0 +1,6 @@
+# Where the forked code was taken from. Update this whenever you pull an
+# upstream change, or the diff command in README.md points at the wrong place
+# and nothing will tell you.
+
+h5p-interactive-video  0e9f997c2d19a8c7be043a84ebf9a1f32008e38b  (v1.28.37)
+h5p-lib-controls       6d9b87e5c0611dfc8e3dfda985522ac0e19269bb

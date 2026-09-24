@@ -1,6 +1,6 @@
 // The layer that lets the forked player run with no H5P underneath it.
 //
-// amd/src/iv/* came from h5p-interactive-video (MIT — see thirdparty/README.md)
+// src/iv/* came from h5p-interactive-video (MIT — see thirdparty/README.md)
 // and it talks to a runtime: H5P.jQuery, H5P.Video, H5P.EventDispatcher,
 // H5P.newRunnable and a handful of smaller things. Upstream that runtime is
 // loaded by H5P core into an iframe of its own.
@@ -11,29 +11,19 @@
 // fork expects is supplied here instead, by us, backed by our own code.
 //
 // The rule this file follows: provide what the fork actually calls, and
-// nothing else. Every member below exists because a grep of amd/src/iv found
+// nothing else. Every member below exists because a grep of src/iv found
 // it being used. An H5P API that upstream has and the fork never reaches for
 // is not reimplemented here, because an unused reimplementation is a thing
 // that can rot without anything noticing.
 //
-//   grep -rhoE "H5P\.[A-Za-z_]+" amd/src/iv/
+//   grep -rhoE "H5P\.[A-Za-z_]+" src/iv/
 //
 // Run that after taking an upstream patch. A name in its output that is not
 // below is a gap, and it will surface as an undefined-is-not-a-function at the
 // moment a learner opens the activity rather than at build time.
 import $ from 'jquery';
-import Log from 'core/log';
-// Loaded by Moodle rather than bundled, and that is not a style choice.
-//
-// backend.js asks requirejs for media_videojs/video-lazy when a stream needs
-// it, and for Vimeo's SDK when a Vimeo video needs it — both at the moment
-// they are needed and not before. A bundler sees those calls and tries to
-// resolve them at build time, which turns two conditional downloads into two
-// unconditional ones and fails outright on the Vimeo URL.
-//
-// It is also plain AMD with no imports, so a copy into amd/build is a correct
-// build for it. See tools/build-plain-amd.js.
-import Backend from 'mod_kaiiv/backend';
+import Log from './log';
+import Backend from './backend';
 
 /**
  * The smallest event emitter the fork is happy with.
@@ -184,7 +174,7 @@ var Video = function(params, contentId, extras) {
         // Put the page's own player element into the wrapper the fork built.
         //
         // The fork empties the stage before it builds its own DOM, which
-        // destroys the <video> that templates/player.mustache put there. So
+        // destroys the <video> that index.js put there. So
         // player.js takes it out of the document first and leaves it here,
         // and this is where it goes back in.
         //
@@ -389,7 +379,7 @@ var Video = function(params, contentId, extras) {
 };
 
 // The state numbers the fork compares against. These are upstream's
-// values, not ours to choose: amd/src/iv/interactive-video.js compares
+// values, not ours to choose: src/iv/interactive-video.js compares
 // against H5P.Video.PLAYING and friends in a dozen places.
 Video.ENDED = 0;
 Video.PLAYING = 1;
@@ -408,7 +398,7 @@ Video.VIDEO_CUED = 5;
  * The method list is not a design. It is what a grep of the forked code
  * asks for:
  *
- *     grep -rhoE "dnb\.dialog\.[A-Za-z_]+" amd/src/iv/
+ *     grep -rhoE "dnb\.dialog\.[A-Za-z_]+" src/iv/
  *
  * Several do nothing, and they are written out one by one rather than
  * generated, because a no-op somebody can read is a no-op somebody can
@@ -657,7 +647,7 @@ var H5P = {
     },
 
     /** Upstream resolves a file inside an H5P package. Ours are already
-     *  URLs, issued by pluginfile.php with enrolment checked. */
+     *  URLs, issued by the host system with access already checked. */
     getPath: function(path) {
         return path;
     },
@@ -709,7 +699,7 @@ var H5P = {
 
     // --- copyright ------------------------------------------------------
     // Upstream collects attribution out of the H5P package and shows it in
-    // a dialog. Our videos come from a Moodle file area or a URL an author
+    // a dialog. Our videos come from the host system or a URL an author
     // typed, and neither carries that metadata, so there is nothing to
     // collect. The names exist because the fork constructs them; the
     // button that would open the dialog is switched off in player.js.

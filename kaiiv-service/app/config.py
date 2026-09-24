@@ -16,7 +16,7 @@ import os
 # internal secret, not three to rotate separately.
 API_KEY = os.environ.get("KAIIV_API_KEY", "").strip()
 
-SERVICE_VERSION = "1.0.0"
+SERVICE_VERSION = "1.1.0"
 
 # The payload contract version. Callers send it and we check it, so that a
 # customer running an older integration gets a clear refusal rather than a

@@ -18,7 +18,7 @@
 // Here there is one name, and the type is a field on the item — which is what
 // the engine already calls it.
 import $ from 'jquery';
-import Log from 'core/log';
+import Log from './log';
 
 /** Kept in step with kaiiv-service/app/types.py by tests/check_fork.py. */
 const RENDERERS = {};
@@ -174,6 +174,22 @@ const send = (item, response, ctx, area, $submit, onSettled) => {
     }
 
     ctx.submit(item.id, response).then((verdict) => {
+        if (!verdict.ok && (verdict.error === 'no_attempts_left'
+                || verdict.error === 'already_correct')) {
+            // Refused by the engine rather than failed: this question is
+            // done with. Saying "try again" here would be a lie the learner
+            // could act on forever, so the card says why and lets them go on.
+            item.answered = true;
+            area.$verdict.removeClass('text-success text-danger')
+                .addClass('text-warning')
+                .text(verdict.error === 'already_correct'
+                    ? ctx.strings.alreadycorrect : ctx.strings.noattemptsleft);
+            area.$feedback.text('');
+            area.$retry.prop('hidden', true);
+            area.$continue.prop('hidden', false);
+            area.$outcome.prop('hidden', false);
+            return null;
+        }
         if (!verdict.ok) {
             // Not marked. Said plainly, because the thing the learner needs to
             // know is not "an error occurred" but "you have not lost an

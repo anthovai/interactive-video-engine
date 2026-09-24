@@ -30,6 +30,7 @@ import zipfile
 PLUGIN = pathlib.Path(__file__).resolve().parent.parent
 REPO = PLUGIN.parents[2]
 ENGINE = REPO / "kaiiv-service"
+PLAYER = REPO / "kaiiv-player"
 DIST = REPO / "dist"
 
 # Never in a customer's copy. node_modules is the build toolchain; the reset
@@ -72,7 +73,10 @@ def check_built_output_is_current() -> None:
     # and is an external of the bundle, so a change to it leaves the bundle's
     # content — and webpack leaves an unchanged file unwritten — untouched.
     backend = PLUGIN / "amd/src/backend.js"
+    # The bundle is the Moodle adapter and the player it is built over, which
+    # lives in kaiiv-player/ at the repository root.
     bundled = [p for p in (PLUGIN / "amd/src").rglob("*.js") if p != backend]
+    bundled += list((PLAYER / "src").rglob("*.js"))
     for built, sources in (("player.min.js", bundled), ("backend.min.js", [backend])):
         path = PLUGIN / "amd/build" / built
         if not path.exists():
@@ -83,8 +87,8 @@ def check_built_output_is_current() -> None:
     css = PLUGIN / "styles.css"
     if not css.exists():
         problems.append("styles.css is missing — run npm run build")
-    elif css.stat().st_mtime + 1 < newest((PLUGIN / "styles").glob("*.css")):
-        problems.append("styles.css is older than styles/ — run npm run build")
+    elif css.stat().st_mtime + 1 < newest((PLAYER / "styles").glob("*.css")):
+        problems.append("styles.css is older than kaiiv-player/styles — run npm run build")
 
 
 def check_licences() -> None:

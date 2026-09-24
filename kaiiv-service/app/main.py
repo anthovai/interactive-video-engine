@@ -160,7 +160,25 @@ def judge(payload: dict[str, Any]) -> Any:
         content = payload.get("content") or {}
         answers = payload.get("answers") or []
         rules = payload.get("rules") or {}
-        attempts = int(payload.get("attempts", 0)) + 1
+        before = int(payload.get("attempts", 0))
+        attempts = before + 1
+
+        # Refused before anything is marked, and refused here rather than
+        # left to each caller. A wrong answer with no attempt left, marked
+        # anyway, is a record the caller will read back as the latest word —
+        # so a learner who got it wrong once, on a one-attempt question, could
+        # post the right answer straight to the caller's endpoint and have it
+        # count. The same after a correct answer: the answer has been revealed
+        # by then, and marking again is marking something already given away.
+        #
+        # Every caller gets this by sending what it already knows: how many
+        # attempts came before, and whether one of them was right.
+        if payload.get("answered_correctly"):
+            return _fail(409, "already_correct",
+                         "this interaction has already been answered correctly")
+        if before > 0 and not timeline.may_retry(rules, before):
+            return _fail(409, "no_attempts_left",
+                         "no attempts are left on this interaction")
 
         stored, correct = grading.judge(
             kind, content, answers, payload.get("response"))

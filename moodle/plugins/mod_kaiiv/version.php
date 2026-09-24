@@ -16,7 +16,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_kaiiv';
-$plugin->version   = 2026092401;
+$plugin->version   = 2026092402;
 $plugin->requires  = 2024100700; // Moodle 4.5 LTS.
 // No dependencies, deliberately. This activity is installed on customers' own
 // Moodle sites, most of which will not carry the proctoring stack, and it used
@@ -25,4 +25,4 @@ $plugin->requires  = 2024100700; // Moodle 4.5 LTS.
 // present its engine address and key are read as well, and it can monitor
 // these activities like any other video — but neither is required.
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.2.1';
+$plugin->release   = '0.3.0';

@@ -89,6 +89,7 @@ const ITEMS = [
 const CONFIG = {
     cmid: 42,
     provider: 'file',
+    src: '/lesson.mp4',
     videoid: '',
     streamurl: '',
     items: ITEMS,
@@ -155,32 +156,38 @@ const STUBS = {
 };
 
 /**
- * A backend that answers the interface without playing anything.
+ * Make jsdom's <video> behave like one that has loaded.
  *
- * jsdom has no media stack, so a real <video> here would never fire a
- * timeupdate and never report a duration. What is being tested is the fork,
- * not the backend — the backend has its own life in mod_kaivideo, where it
- * came from.
+ * jsdom has no media stack: readyState stays 0, duration is NaN, and play()
+ * is "not implemented". The player's file backend waits for metadata before
+ * it tells the fork the video is loaded — a real fix, for a real race — so a
+ * video that never loads would leave the fork waiting forever. What is being
+ * tested is the fork and the adapter, not jsdom's media element, so the
+ * element is given the handful of properties a loaded one has.
+ *
+ * @param {HTMLVideoElement} video
  */
-const makeBackendStub = () => {
+const pretendLoaded = (video) => {
     let time = 0;
-    const ticks = [];
-    return {
-        create: (config, root) => Promise.resolve({
-            host: root.querySelector('video') || root,
-            play: () => Promise.resolve(),
-            pause: () => {},
-            seek: (seconds) => {
-                time = seconds;
-                ticks.forEach((fn) => fn());
+    let paused = true;
+    Object.defineProperties(video, {
+        readyState: {get: () => 4},
+        duration: {get: () => 300},
+        paused: {get: () => paused},
+        currentTime: {
+            get: () => time,
+            set: (value) => {
+                time = value;
             },
-            currentTime: () => time,
-            duration: () => 300,
-            isPaused: () => true,
-            onTick: (fn) => ticks.push(fn),
-            onEnded: () => {},
-            onPlayAttempt: () => {},
-        }),
+        },
+        buffered: {get: () => ({length: 0})},
+    });
+    video.play = () => {
+        paused = false;
+        return Promise.resolve();
+    };
+    video.pause = () => {
+        paused = true;
     };
 };
 
@@ -232,7 +239,7 @@ const run = async () => {
     STUBS.jquery.fn.slider = function() {
         return this;
     };
-    STUBS['mod_kaiiv/backend'] = makeBackendStub();
+    pretendLoaded(window.document.querySelector('video'));
 
     // The smallest AMD loader that satisfies a named define with deps.
     const defined = {};
@@ -245,8 +252,8 @@ const run = async () => {
         }));
     };
     window.define.amd = true;
-    // backend.min.js is loaded as a stub, not from disk, so nothing here
-    // reaches the runtime require() calls it makes.
+    // Only Vimeo's SDK and an HLS stream are fetched through RequireJS at
+    // runtime, and this page has neither.
     window.require = () => {
         throw new Error('runtime require() reached in the smoke test');
     };
@@ -256,6 +263,16 @@ const run = async () => {
         check('the bundle exists', false, 'run npm run build first');
         return;
     }
+
+    // A file in amd/build with an import statement in it was copied rather
+    // than built, and loads as a script that fails with a syntax error at
+    // the moment a learner opens the activity.
+    const unbuilt = fs.readdirSync(path.join(ROOT, 'amd/build'))
+        .filter((name) => name.endsWith('.min.js'))
+        .filter((name) => /^\s*(import|export)\s/m.test(
+            fs.readFileSync(path.join(ROOT, 'amd/build', name), 'utf8')));
+    check('nothing in amd/build is an unbuilt ES module', unbuilt.length === 0,
+        unbuilt.join(', '));
 
     // window.eval, so the bundle runs in the window's scope. See the JSDOM
     // options above for why nothing else will do.

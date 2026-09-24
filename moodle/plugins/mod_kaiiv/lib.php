@@ -110,10 +110,17 @@ function kaiiv_settle_source($data) {
  * @param stdClass $data with coursemodule and videofile
  */
 function kaiiv_save_video_file($data) {
+    // Global because mod_form.php reads $CFG at its top level, and inside a
+    // function it would otherwise see nothing. The editing page has already
+    // loaded the form, which hid this; creating the activity any other way —
+    // a script, an admin tool, a test generator — failed on the include.
+    global $CFG;
+
     if (empty($data->coursemodule)) {
         return;
     }
 
+    require_once($CFG->dirroot . '/course/moodleform_mod.php');
     require_once(__DIR__ . '/mod_form.php');
     $context = context_module::instance($data->coursemodule);
 

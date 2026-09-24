@@ -120,10 +120,13 @@ class engine {
      * @param mixed $response what the learner sent
      * @param int $attempts how many attempts they had used before this one
      * @param array $rules
-     * @return array ok/correct/store/revealed/answers/feedback
+     * @param bool $answeredcorrectly whether one of those attempts was right,
+     *        in which case the engine refuses to mark another
+     * @return array ok/correct/store/revealed/answers/feedback, or ok=false
+     *         with no_attempts_left or already_correct
      */
     public static function judge(array $interaction, $response, int $attempts,
-            array $rules): array {
+            array $rules, bool $answeredcorrectly = false): array {
         return self::post('/judge', [
             'type' => $interaction['type'],
             'content' => $interaction['content'],
@@ -131,6 +134,7 @@ class engine {
             'feedback' => $interaction['feedback'] ?? '',
             'response' => $response,
             'attempts' => $attempts,
+            'answered_correctly' => $answeredcorrectly,
             'rules' => $rules,
         ]);
     }

@@ -83,6 +83,10 @@ $PAGE->requires->js_call_amd('mod_kaiiv/player', 'init', [[
     'cmid' => (int) $cm->id,
     'provider' => $sourceinfo['provider'],
     'videoid' => $sourceinfo['videoid'],
+    // The address of a file or a stream. For a file it is also in the markup;
+    // the player is given it anyway, because it builds that markup itself on
+    // pages that are not this one and checks for it the same way on both.
+    'src' => in_array($sourceinfo['provider'], \mod_kaiiv\source::NATIVE, true) ? $videourl : '',
     // The stream address, for the one backend that has to attach its source
     // rather than declare it in the markup.
     'streamurl' => $sourceinfo['provider'] === \mod_kaiiv\source::HLS ? $videourl : '',

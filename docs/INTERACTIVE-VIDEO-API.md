@@ -75,7 +75,12 @@ response       interactionid, userid, response, attempt, correct, timecreated
 
 1. **ตอนครูบันทึกคำถาม** → `POST /author` → เก็บ `content` กับ `answers` คนละคอลัมน์
 2. **ตอนผู้เรียนเปิดหน้า** → `POST /timeline` → ส่งผลลัพธ์ให้ player ได้ทั้งก้อน
-3. **ตอนผู้เรียนตอบ** → `POST /judge` → บันทึก `store` กับ `correct` ลงตาราง response
+3. **ตอนผู้เรียนตอบ** → `POST /judge` พร้อม `attempts` (ตอบข้อนี้มาแล้วกี่ครั้ง) และ
+   `answered_correctly` (เคยตอบถูกหรือยัง) → บันทึก `store` กับ `correct` ลงตาราง response
+   เครื่องยนต์ปฏิเสธเมื่อหมดสิทธิ์หรือเคยตอบถูกแล้ว — ดู "รหัสความผิดพลาด"
+
+ฝั่งหน้าเว็บใช้ตัวเล่น [`kaiiv-player`](../kaiiv-player) ได้เลย ไม่ต้องเขียนเอง
+และมีเซิร์ฟเวอร์ตัวอย่างที่ต่อครบทั้งสามข้อที่ [`kaiiv-player/examples/server`](../kaiiv-player/examples/server)
 
 ฝั่ง Moodle ทำไว้แล้วใน [`mod_kaiiv/classes/engine.php`](../moodle/plugins/mod_kaiiv/classes/engine.php)
 อ่านไฟล์นั้นเป็นตัวอย่างการต่อ — มันสั้นโดยตั้งใจ
@@ -197,7 +202,13 @@ response       interactionid, userid, response, attempt, correct, timecreated
 | `bad_authoring` | 422 | คำถามที่สร้างไม่ได้ — ข้อความบอกว่าทำไม |
 | `bad_response` | 422 | คำตอบที่อ่านเป็นคำตอบของข้อนี้ไม่ได้ |
 | `bad_request` | 422 | contract ผิดเวอร์ชัน หรือ payload ผิดรูป |
+| `no_attempts_left` | 409 | ผู้เรียนใช้สิทธิ์ตอบข้อนี้ครบแล้ว ไม่ได้ตรวจ ไม่ต้องบันทึก |
+| `already_correct` | 409 | ผู้เรียนเคยตอบข้อนี้ถูกแล้ว (เฉลยถูกเปิดไปแล้ว) ไม่ได้ตรวจ ไม่ต้องบันทึก |
 | `contract_violation` | 500 | บริการกำลังจะส่งเฉลยออกไป และหยุดตัวเองไว้ |
+
+สองรหัส 409 มีไว้ปิดช่องที่ผู้เรียนยิง request ตรงไปที่ระบบ หลังตอบผิดและเห็นเฉลยแล้ว
+คะแนนอ่านจากคำตอบล่าสุด คำตอบที่ถูกตรวจหลังหมดสิทธิ์จึงจะไปแทนที่คำตอบที่นับจริง
+เครื่องยนต์ไม่เก็บอะไร จึงต้องให้ผู้เรียกบอก `attempts` และ `answered_correctly` มาทุกครั้ง
 
 กุญแจผิดเป็นข้อยกเว้นรูปแบบเดียว — FastAPI ตอบ `401 {"detail": "bad key"}` ตรงๆ
 ส่วน `bad_key` `unreachable` และ `malformed` เป็นชื่อที่**ฝั่งผู้เรียกตั้งเอง**
@@ -214,5 +225,5 @@ response       interactionid, userid, response, attempt, correct, timecreated
 cd kaiiv-service && python -m pytest -q
 ```
 
-36 ข้อ ไม่ต้องมี Moodle ไม่ต้องมีฐานข้อมูล ไม่ต้องมี container — เพราะเครื่องยนต์ไม่มีอะไรเลย
+38 ข้อ ไม่ต้องมี Moodle ไม่ต้องมีฐานข้อมูล ไม่ต้องมี container — เพราะเครื่องยนต์ไม่มีอะไรเลย
 นอกจากเลขคณิตบนข้อมูลที่เพิ่งรับมา และนั่นคือประโยชน์ข้อหนึ่งของการแยกมันออกมา

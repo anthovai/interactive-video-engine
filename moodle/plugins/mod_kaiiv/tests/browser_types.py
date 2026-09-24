@@ -13,6 +13,7 @@ video carries on.
 
     php mod/kaiiv/tests/reset_learner.php <cmid> learner   (in the container)
     KAIIV_LEARNER_PASSWORD=... python moodle/plugins/mod_kaiiv/tests/browser_types.py <cmid> [base-url]
+    KAIIV_PAGE=http://127.0.0.1:8200/ python moodle/plugins/mod_kaiiv/tests/browser_types.py
 
 The reset matters: an activity the learner has already answered does not ask
 again, which is right for them and useless for this.
@@ -36,10 +37,15 @@ except Exception:
 
 CMID = sys.argv[1] if len(sys.argv) > 1 else "7"
 BASE = sys.argv[2] if len(sys.argv) > 2 else "http://localhost:8099"
-# From the environment; see browser_check.py.
+# Any page the player is on, rather than a Moodle activity: the example server
+# in kaiiv-player/examples/server, or a customer's own. Opened as it is, with
+# no Moodle sign-in, because the page decides who the learner is.
+PAGE = os.environ.get("KAIIV_PAGE", "")
+# From the environment; see browser_check.py. Only needed for Moodle.
 PASSWORD = os.environ.get("KAIIV_LEARNER_PASSWORD", "")
-if not PASSWORD:
-    sys.exit("set KAIIV_LEARNER_PASSWORD to the test learner's password")
+if not PAGE and not PASSWORD:
+    sys.exit("set KAIIV_LEARNER_PASSWORD to the test learner's password, "
+             "or KAIIV_PAGE to a page that needs no sign-in")
 
 problems: list[str] = []
 
@@ -331,7 +337,8 @@ def marker(page, kind, spec) -> None:
 
 
 def main() -> int:
-    print(f"every interaction type, against {BASE}/mod/kaiiv/view.php?id={CMID}")
+    target = PAGE or f"{BASE}/mod/kaiiv/view.php?id={CMID}"
+    print(f"every interaction type, against {target}")
     print()
 
     with sync_playwright() as pw:
@@ -343,13 +350,14 @@ def main() -> int:
         page.on("console", lambda m: errors.append(m.text)
                 if m.type == "error" and "favicon" not in m.text else None)
 
-        page.goto(f"{BASE}/login/index.php")
-        page.fill("#username", "learner")
-        page.fill("#password", PASSWORD)
-        page.click("#loginbtn")
-        page.wait_for_load_state("networkidle")
+        if not PAGE:
+            page.goto(f"{BASE}/login/index.php")
+            page.fill("#username", "learner")
+            page.fill("#password", PASSWORD)
+            page.click("#loginbtn")
+            page.wait_for_load_state("networkidle")
 
-        page.goto(f"{BASE}/mod/kaiiv/view.php?id={CMID}")
+        page.goto(target)
         page.wait_for_selector('[data-region="kaiiv"][data-state="ready"]', timeout=30000)
         page.evaluate("() => { const s = document.querySelector('.h5p-splash'); if (s) s.click(); }")
 

@@ -1,7 +1,7 @@
 """Does the compatibility layer still cover the forked code?
 
-amd/src/iv and amd/src/libcontrols came from H5P (MIT — see thirdparty/) and
-they talk to a runtime that is not here. amd/src/h5pcompat.js supplies it.
+src/iv and src/libcontrols came from H5P (MIT — see thirdparty/) and they
+talk to a runtime that is not here. src/h5pcompat.js supplies it.
 
 The failure mode this exists for has no other warning. Nothing about a missing
 H5P member is a build error: the fork is plain JavaScript reaching for a
@@ -14,7 +14,7 @@ they cannot now finish.
 It is most likely to open up when somebody takes a patch from upstream, which
 is exactly the moment when everything looks fine because the diff was small.
 
-    python moodle/plugins/mod_kaiiv/tests/check_fork.py
+    python kaiiv-player/tests/check_fork.py
 
 Run it after every upstream merge and before every release.
 
@@ -30,8 +30,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-FORKED = ["amd/src/iv", "amd/src/libcontrols"]
-SHIM = "amd/src/h5pcompat.js"
+FORKED = ["src/iv", "src/libcontrols"]
+SHIM = "src/h5pcompat.js"
 
 # Names the fork assigns to itself rather than expecting from a runtime.
 #
@@ -111,10 +111,10 @@ def check_coverage() -> None:
 
 def check_self_registration_happens() -> None:
     """The null placeholders have to be filled in by somebody."""
-    player = ROOT / "amd/src/player.js"
+    player = ROOT / "src/player.js"
     if not player.exists():
         notes.append(
-            "amd/src/player.js does not exist yet, so nothing fills in "
+            "src/player.js does not exist yet, so nothing fills in "
             + ", ".join(sorted(SELF_REGISTERED))
             + ". The player cannot run until it does.")
         return
@@ -134,6 +134,7 @@ def check_licences_travel_with_it() -> None:
         "thirdparty/LICENCE-h5p-lib-controls.md",
         "thirdparty/README.md",
         "thirdparty/UPSTREAM-COMMIT.txt",
+        "thirdparty/LICENCE-fontawesome-free.txt",
     ]
     for name in expected:
         path = ROOT / name
@@ -170,12 +171,12 @@ def check_size_units_still_match() -> None:
     interaction is silently drawn the wrong size — the first version of the
     conversion was missing entirely, and each question covered the whole
     video with a white box that looked like a failed video load."""
-    source = read(ROOT / "amd/src/iv/interactive-video.js")
+    source = read(ROOT / "src/iv/interactive-video.js")
     for line in ("this.fontSize = 16;", "this.width = 640;"):
         if line not in source:
             problems.append(
                 f"iv/interactive-video.js no longer contains {line!r}. "
-                f"FORK_WIDTH_EM in amd/src/player.js is derived from it and "
+                f"FORK_WIDTH_EM in src/player.js is derived from it and "
                 f"has to be brought back in step.")
 
 
@@ -215,22 +216,17 @@ def check_members_of_what_the_shim_hands_out() -> None:
 
 
 def check_no_build_output_pretending_to_be_a_build() -> None:
-    """mod_kaivideo's build script copies AMD sources unminified, which is a
-    correct build for plain AMD. The fork is not plain AMD — it is ES modules
-    with imports — so a copy produces a file the browser cannot load, and it
-    fails at runtime rather than at build time."""
-    build = ROOT / "amd/build"
-    if not build.exists():
-        notes.append("amd/build does not exist yet: nothing has been built.")
+    """The script build is loaded with a plain <script> tag, where an import
+    statement is a syntax error at the moment a learner opens the lesson.
+    mod_kaiiv's own build is checked the same way by its tests/smoke.js."""
+    bundle = ROOT / "dist/kaiiv-player.js"
+    if not bundle.exists():
+        notes.append("dist/ does not exist yet: nothing has been built.")
         return
-
-    for path in build.glob("*.min.js"):
-        source = read(path)
-        if re.search(r"^\s*import\s", source, re.M):
-            problems.append(
-                f"{path.name} contains ES module syntax, so it was copied "
-                f"rather than bundled. Moodle will load it as a script and "
-                f"the page will fail with a syntax error.")
+    if re.search(r"^\s*(import|export)\s", read(bundle), re.M):
+        problems.append(
+            "dist/kaiiv-player.js contains ES module syntax, so it was not "
+            "bundled. A <script> tag will fail on it with a syntax error.")
 
 
 def main() -> int:

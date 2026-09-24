@@ -135,6 +135,50 @@ def test_a_question_round_trips(client):
     assert score == {"ok": True, "correct": 1, "total": 1, "fraction": 1.0}
 
 
+def test_an_answer_past_the_last_attempt_is_not_marked(client):
+    """The bypass this closes: wrong once on a one-attempt question, then the
+    right answer posted straight at the caller's endpoint.
+
+    The caller's record reads the latest response as the word on that
+    question, so a second answer that got marked would replace the first —
+    after the answer had already been revealed to the learner.
+    """
+    authored = client.post("/author", headers=HEAD, json={
+        "contract": "1.0", "type": "truefalse",
+        "authored": {"text": "Water is wet.", "correct": True},
+    }).json()
+    judged = lambda attempts, response, rules, **extra: client.post(
+        "/judge", headers=HEAD, json={
+            "contract": "1.0", "type": "truefalse",
+            "content": authored["content"], "answers": authored["answers"],
+            "response": response, "attempts": attempts, "rules": rules,
+            **extra,
+        })
+
+    one_go = {"allowreview": True, "maxattempts": 1}
+    first = judged(0, False, one_go).json()
+    assert first["correct"] is False and first["may_retry"] is False
+    assert first["revealed"] is True
+
+    again = judged(1, True, one_go)
+    assert again.status_code == 409
+    assert again.json()["error"] == "no_attempts_left"
+    assert "correct" not in again.json()
+
+    # No retries at all, whatever the limit says.
+    no_review = judged(1, True, {"allowreview": False, "maxattempts": 0})
+    assert no_review.json()["error"] == "no_attempts_left"
+
+    # Unlimited retries are unlimited...
+    unlimited = {"allowreview": True, "maxattempts": 0}
+    assert judged(5, True, unlimited).json()["correct"] is True
+
+    # ...until one of them is right.
+    done = judged(2, True, unlimited, answered_correctly=True)
+    assert done.status_code == 409
+    assert done.json()["error"] == "already_correct"
+
+
 def test_a_caption_is_not_in_the_divisor(client):
     """A video with one question and three captions is marked out of one."""
     rows = [
