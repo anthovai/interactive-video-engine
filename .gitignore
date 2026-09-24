@@ -2,6 +2,8 @@ node_modules/
 __pycache__/
 .pytest_cache/
 .venv/
-dist/
+# The packages tools/package.py builds, at the root only. kaiiv-player/dist is
+# the player's build and is committed: a customer loading it has no node.
+/dist/
 reports/
 .env
