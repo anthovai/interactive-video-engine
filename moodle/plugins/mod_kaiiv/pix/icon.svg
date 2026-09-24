@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A frame with a play triangle and a marker on the timeline beneath it.
+     The marker is the point: this is not a video, it is a video with things
+     placed on it, and an icon that shows only a play button is the icon every
+     other media activity already has. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+     fill="none" stroke="currentColor" stroke-width="1.6"
+     stroke-linecap="round" stroke-linejoin="round">
+  <rect x="2" y="3" width="20" height="13" rx="2"/>
+  <path d="M10 7.5v5l4-2.5z" fill="currentColor" stroke="none"/>
+  <line x1="2" y1="20" x2="22" y2="20"/>
+  <circle cx="9" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+  <circle cx="16" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+</svg>

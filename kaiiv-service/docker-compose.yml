@@ -1,0 +1,34 @@
+# The interactive video engine on its own, for a Moodle that is not part of our
+# stack.
+#
+#     KAIIV_API_KEY=<a long random secret> docker compose up -d --build
+#
+# The same secret goes into Moodle: Site administration → Plugins → Activity
+# modules → Interactive video (KAISER) → Engine key.
+#
+# Bound to 127.0.0.1 by default, which is right when Moodle runs on the same
+# machine. The engine must never be reachable from the internet — a browser
+# that could reach it could ask it to mark things — so when Moodle is on a
+# different machine, bind to that network's private address instead, e.g.
+#
+#     KAIIV_BIND=10.0.0.5 KAIIV_API_KEY=... docker compose up -d --build
+#
+# and allow only the Moodle server through the firewall to that port.
+#
+# The engine keeps nothing. There is no volume here because there is nothing
+# to keep: every answer is stored by Moodle, so this can be stopped, rebuilt or
+# replaced at any time without losing a thing.
+
+services:
+  kaiiv-service:
+    build: .
+    restart: unless-stopped
+    environment:
+      KAIIV_API_KEY: ${KAIIV_API_KEY:?set KAIIV_API_KEY to a long random secret}
+    ports:
+      - "${KAIIV_BIND:-127.0.0.1}:${KAIIV_PORT:-9200}:9200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:9200/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

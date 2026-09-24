@@ -1,0 +1,109 @@
+{{!
+    The player's container, and almost nothing else.
+
+    Unlike mod_kaivideo's template, this one does not lay out controls, a
+    question card or an outcome panel. The forked H5P shell builds all of that
+    itself, into [data-region="stage"], because that shell — the seekbar with
+    interaction markers, the bookmark menu, the endscreen, the screen-reader
+    announcements — is the reason we forked it rather than wrote it.
+
+    What stays here is the part the shell cannot build: the video element
+    itself, which has to be a real <video> on this page so that the proctoring
+    adapter can drive it, and the per-provider wrapper each backend needs.
+}}
+<div class="kaiiv" data-region="kaiiv" data-state="loading"
+     data-provider="{{provider}}">
+
+    {{#enginefailed}}
+    {{!
+        Shown instead of the video, not beside it. A video that plays with no
+        questions on it looks like it worked, and a learner will watch it to
+        the end and believe they are finished.
+    }}
+    <div class="alert alert-danger" data-region="enginefailed">
+        {{#str}}error:enginedown, mod_kaiiv{{/str}}
+        {{! Only filled in for teachers and administrators; see view.php. }}
+        {{#enginereason}}
+        <div class="small mt-2" data-region="enginereason">{{enginereason}}</div>
+        {{/enginereason}}
+    </div>
+    {{/enginefailed}}
+
+    {{^enginefailed}}
+    {{#nointeractions}}
+    <div class="alert alert-info" data-region="nointeractions">
+        {{#str}}nointeractions, mod_kaiiv{{/str}}
+        {{#canedit}}<a href="{{editurl}}">{{#str}}editinteractions, mod_kaiiv{{/str}}</a>{{/canedit}}
+    </div>
+    {{/nointeractions}}
+
+    {{!
+        Sized rather than left to fill whatever it likes. A <video> with no
+        poster renders as its intrinsic box on a black background, which comes
+        out as a screen-high black rectangle with a small white square in the
+        middle of it before anybody presses play.
+    }}
+    <div class="kaiiv-stage position-relative bg-dark mx-auto"
+         style="max-width: 56rem;" data-region="stage">
+
+        {{! A real <video> for both a plain file and an HLS stream. The stream
+            gets its source attached by video.js, which Moodle already ships
+            with @videojs/http-streaming in it; everything downstream — the
+            controls, the due rule, the proctoring adapter — is looking at the
+            same element either way and cannot tell them apart. }}
+        {{#isnative}}
+        <div class="ratio ratio-16x9">
+            <video data-region="video" preload="metadata" src="{{filesrc}}"
+                   style="object-fit: contain;"></video>
+        </div>
+        {{/isnative}}
+
+        {{#isyoutube}}
+        {{! Replaced by the iframe once YouTube's API has loaded. }}
+        <div class="ratio ratio-16x9">
+            <div data-region="youtube"></div>
+        </div>
+        {{/isyoutube}}
+
+        {{#isvimeo}}
+        <div class="ratio ratio-16x9 position-relative">
+            <div data-region="vimeo"></div>
+            {{!
+                A transparent sheet over the iframe. Vimeo's own controls can
+                be asked to go away, but whether that request is honoured
+                depends on the account the video sits in — and a guarantee that
+                holds only on some customers' accounts is not a guarantee.
+
+                So the controls are put out of reach instead of asked to hide.
+            }}
+            <div class="position-absolute top-0 start-0 w-100 h-100"
+                 data-region="shield" style="cursor: default;"></div>
+        </div>
+        {{/isvimeo}}
+
+        {{!
+            Where the forked shell draws interactions, and where interactions.js
+            renders the ones we mark. Empty in the markup on purpose: anything
+            put here would be in the page before the timeline arrives, and the
+            one thing that must never be in the page early is a question.
+        }}
+        <div class="kaiiv-overlay position-absolute top-0 start-0 w-100 h-100"
+             data-region="overlay"></div>
+    </div>
+
+    {{!
+        The shell's own controls are built into here. Until the bundle loads
+        there is nothing, which is why the outer div carries data-state.
+    }}
+    <div class="kaiiv-controls mx-auto" style="max-width: 56rem;"
+         data-region="controls"></div>
+
+    <div class="d-flex mt-2 mx-auto" style="max-width: 56rem;">
+        <span class="small text-muted ms-auto" data-region="summary">
+            {{#str}}questioncount, mod_kaiiv, {{questioncount}}{{/str}}
+        </span>
+    </div>
+    {{/enginefailed}}
+
+    <div class="alert alert-warning mt-2" data-region="problem" hidden></div>
+</div>

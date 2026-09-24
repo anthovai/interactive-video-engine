@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/kaiiv/db" VERSION="20260919" COMMENT="Interactive video, forked from H5P Interactive Video. The interaction shape follows the upstream semantics.json closely enough that content is convertible; the correct answers are the one part that does not follow it, because here they never leave the server.">
+  <TABLES>
+    <TABLE NAME="kaiiv" COMMENT="One interactive video activity.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="videourl" TYPE="char" LENGTH="1333" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Empty when the video is an uploaded file. The file area is the truth and this is the fallback, exactly as in mod_kaivideo."/>
+        <FIELD NAME="posterstart" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Show the start screen with the title before playing."/>
+        <FIELD NAME="showbookmarks" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="showendscreen" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="The forked endscreen, showing the learner their own submitted score. Rendered from what the server sent back, never from anything the browser worked out."/>
+        <FIELD NAME="mustanswer" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Playback refuses to continue past an unanswered required interaction. Enforced by the due rule (playhead at or past the point and unanswered) rather than by watching for a skip, so dragging the seekbar is the same case as playing."/>
+        <FIELD NAME="allowreview" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="maxattempts" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Attempts per interaction, 0 meaning unlimited. While attempts remain and the last one was wrong, the server withholds both the correct answer and the feedback: releasing the explanation early turns retry into a button that hands out marks."/>
+        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="100" SEQUENCE="false"/>
+        <FIELD NAME="completionanswerall" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="completionwatched" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="kaiiv_interaction" COMMENT="One thing placed on the timeline. The presentation columns mirror what the forked player expects; the content columns are ours.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kaiivid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="starttime" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="endtime" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When the interaction stops being on screen. Equal to starttime for the kinds that pause the video, because those end when they are answered and not when a clock runs out."/>
+        <FIELD NAME="type" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="choice" SEQUENCE="false" COMMENT="choice, multichoice, truefalse, shorttext, blanks, dragtext, marktheword, label, image or link. Which of those are graded is declared in classes/interaction_type.php; that list and this column must not drift."/>
+        <FIELD NAME="displaytype" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="poster" SEQUENCE="false" COMMENT="poster (drawn onto the video) or button (a marker the learner opens). Graded interactions that pause the video are forced to poster on save: a question the learner can decline to open is not a question the video can refuse to continue past."/>
+        <FIELD NAME="pausevideo" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="x" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="20" SEQUENCE="false" COMMENT="Percent of the video width. Percentages rather than pixels because the same activity is watched on a phone and on a projector."/>
+        <FIELD NAME="y" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="20" SEQUENCE="false"/>
+        <FIELD NAME="width" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="60" SEQUENCE="false"/>
+        <FIELD NAME="height" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="40" SEQUENCE="false"/>
+        <FIELD NAME="label" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Shown on the marker and read out by screen readers. Not the question text: a marker that gives the question away before it is opened defeats the point of a button interaction."/>
+        <FIELD NAME="category" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON of everything the browser is allowed to see: question text, options, sentences with the gaps blanked out, image ids, link targets."/>
+        <FIELD NAME="answers" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON of the correct answer. Never in any payload sent to a browser that is taking the activity. This column is the reason the fork does not use H5P.Question."/>
+        <FIELD NAME="feedback" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Tie-break for two interactions at the same second, so the order an author set is the order shown."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="kaiivid" TYPE="foreign" FIELDS="kaiivid" REFTABLE="kaiiv" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="kaiivid-starttime" UNIQUE="false" FIELDS="kaiivid, starttime"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="kaiiv_bookmark" COMMENT="A named point on the timeline. No grading and no state; it exists so a learner can find a section again.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kaiivid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="attime" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="label" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="kaiivid" TYPE="foreign" FIELDS="kaiivid" REFTABLE="kaiiv" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="kaiivid-attime" UNIQUE="false" FIELDS="kaiivid, attime"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="kaiiv_response" COMMENT="What one learner answered, every time they answered it.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="interactionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Kept verbatim, so a teacher sees what was said and not only whether it was accepted."/>
+        <FIELD NAME="category" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="The category as it stood when this was answered, copied rather than read back through the interaction: recategorising a question next term must not rewrite what last term said about a cohort."/>
+        <FIELD NAME="attempt" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="correct" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="interactionid" TYPE="foreign" FIELDS="interactionid" REFTABLE="kaiiv_interaction" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="interactionid-userid" UNIQUE="false" FIELDS="interactionid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="kaiiv_progress" COMMENT="How far one learner has got. Every attempt is in kaiiv_response; this is the summary the activity reads.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kaiivid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="furthest" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Furthest point reached. Never rewound by watching again, which is also what makes it safe to send twice from pagehide and visibilitychange."/>
+        <FIELD NAME="finished" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="kaiivid" TYPE="foreign" FIELDS="kaiivid" REFTABLE="kaiiv" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="kaiivid-userid" UNIQUE="true" FIELDS="kaiivid, userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

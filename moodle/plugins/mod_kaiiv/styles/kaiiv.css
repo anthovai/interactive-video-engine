@@ -1,0 +1,313 @@
+/*
+ * Ours. Everything else in this directory is forked from h5p-interactive-video
+ * and left as upstream wrote it; this file is the styling for the parts that
+ * were not forked — the interaction cards interactions.js draws, the dialog
+ * h5pcompat.js supplies in place of H5P.DragNBar's, and the one rule H5P core
+ * provides that the forked CSS assumes is there.
+ *
+ * tools/build-styles.js appends it after the forked files, so a rule here wins
+ * a tie with one of theirs. Every selector is scoped under .kaiiv, so none of
+ * it can reach the rest of a Moodle page.
+ */
+
+/* ---- H5P core, the part the forked CSS takes for granted ---------------
+ *
+ * The screen-reader text the fork writes — "Video progress", the time read
+ * out as words, the announcer for interactions arriving — is hidden by a rule
+ * in H5P core's own stylesheet, not in anything we forked. Without it every
+ * one of those strings is printed on the page under the video.
+ */
+.kaiiv .hidden-but-read {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---- H5P core's theme, the part the forked CSS reads --------------------
+ *
+ * The forked CSS sizes and colours its controls from --h5p-theme-* variables.
+ * Upstream declares the spacing ones on .h5p-container.h5p-interactive-video,
+ * and H5P core supplies the colours; our stage is not an .h5p-container and
+ * we carry no H5P core, so every var() resolved to nothing and every calc()
+ * built on one was thrown away by the browser — silently, a property at a
+ * time.
+ *
+ * Declared here instead. The colours are Moodle's, not H5P's, so the player
+ * looks like part of the site it is on.
+ */
+.kaiiv .h5p-interactive-video {
+    --h5p-theme-scale: 0.8;
+    --h5p-theme-spacing-xl: calc(3em * var(--h5p-theme-scale));
+    --h5p-theme-spacing-l: calc(2em * var(--h5p-theme-scale));
+    --h5p-theme-spacing-m: calc(1.5em * var(--h5p-theme-scale));
+    --h5p-theme-spacing-s: calc(1em * var(--h5p-theme-scale));
+    --h5p-theme-spacing-xs: calc(0.65em * var(--h5p-theme-scale));
+    --h5p-theme-spacing-xxs: calc(0.5em * var(--h5p-theme-scale));
+    --h5p-theme-font-size-xxl: calc(1.5em * var(--h5p-theme-scale));
+    --h5p-theme-font-size-xl: calc(1.25em * var(--h5p-theme-scale));
+    --h5p-theme-font-size-l: calc(1.125em * var(--h5p-theme-scale));
+    --h5p-theme-font-size-m: calc(1em * var(--h5p-theme-scale));
+    --h5p-theme-font-size-s: calc(0.85em * var(--h5p-theme-scale));
+
+    --h5p-theme-main-cta-base: #0f6cbf;
+    --h5p-theme-contrast-cta: #1b1a1d;
+    --h5p-theme-contrast-cta-white: #ffffff;
+    --h5p-theme-contrast-cta-light: #e7f1fb;
+    --h5p-theme-ui-base: #ffffff;
+    --h5p-theme-text-third: #6a737b;
+    --h5p-theme-border-radius-medium: 0.5rem;
+    --h5p-theme-border-radius-large: 1rem;
+    --h5p-theme-endscreen-time-width: 4em;
+}
+
+/* ---- control icons ---------------------------------------------------------
+ *
+ * Upstream draws them from 'h5p-theme', an icon font that H5P core loads and
+ * we do not carry, so every button was an empty square. Moodle already ships
+ * Font Awesome 6, and each control has a direct equivalent there; the code
+ * points are different, so each one is restated rather than the family
+ * swapped underneath them.
+ */
+.kaiiv .h5p-interactive-video .h5p-control:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-minimal-button:before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+}
+
+.kaiiv .h5p-interactive-video .h5p-play:before { content: "\f04b"; }
+.kaiiv .h5p-interactive-video .h5p-pause:before { content: "\f04c"; }
+.kaiiv .h5p-interactive-video .h5p-rewind10:before { content: "\f1da"; }
+.kaiiv .h5p-interactive-video .h5p-control.h5p-bookmarks:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-bookmarks:before { content: "\f02e"; }
+.kaiiv .h5p-interactive-video .h5p-control.h5p-endscreens:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-endscreens:before { content: "\f11e"; }
+.kaiiv .h5p-interactive-video .h5p-control.h5p-quality:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-quality:before { content: "\f013"; }
+.kaiiv .h5p-interactive-video .h5p-control.h5p-captions:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-captions:before { content: "\f20a"; }
+.kaiiv .h5p-interactive-video .h5p-control.h5p-playbackRate:before,
+.kaiiv .h5p-interactive-video .h5p-minimal-overlay .h5p-playbackRate:before { content: "\f3fd"; }
+.kaiiv .h5p-interactive-video .h5p-fullscreen:before { content: "\f065"; }
+.kaiiv .h5p-interactive-video .h5p-exit:before { content: "\f066"; }
+.kaiiv .h5p-interactive-video .h5p-mute:before { content: "\f028"; }
+.kaiiv .h5p-interactive-video .h5p-muted:before { content: "\f6a9"; }
+.kaiiv .h5p-interactive-video .h5p-more:before { content: "\f142"; }
+
+/* Play is the first control, and upstream gives it a white disc. Its icon
+ * inherited white from the bar, so the most important button on the player
+ * was a blank circle. */
+.kaiiv .h5p-interactive-video .h5p-controls-left .h5p-control:first-child:before {
+    color: var(--h5p-theme-contrast-cta);
+}
+
+/* Quality, captions and playback speed are offered by upstream's own video
+ * handlers. Ours answer "none" for all three — see H5P.Video in
+ * h5pcompat.js — and the fork still draws the buttons, which then open empty
+ * menus. A control that does nothing is worse than no control, so they are
+ * not shown. When a backend learns to answer one of them, remove its line. */
+.kaiiv .h5p-interactive-video .h5p-control.h5p-quality,
+.kaiiv .h5p-interactive-video .h5p-control.h5p-captions,
+.kaiiv .h5p-interactive-video .h5p-control.h5p-playbackRate {
+    display: none !important;
+}
+
+/* The stage is what every absolutely positioned piece — interactions, the
+ * dialog, the overlay — is placed against. */
+.kaiiv [data-region="stage"] {
+    position: relative;
+    overflow: hidden;
+}
+
+/* The fork sizes its own wrapper from the video. The Bootstrap ratio frame the
+ * template put around the element keeps its shape until metadata arrives, and
+ * is otherwise told to stay out of the way. */
+.kaiiv .h5p-video-wrapper > .ratio {
+    width: 100%;
+}
+
+/* ---- interaction cards ---------------------------------------------------
+ *
+ * The fork positions the interaction box by the author's x, y, width and
+ * height, as percentages of the video. The card fills that box and scrolls
+ * inside it, rather than growing past it: a question with five long options
+ * in a box an author sized for two would otherwise run off the bottom of the
+ * video, and the options that ran off are the ones a learner cannot reach.
+ */
+.kaiiv .kaiiv-interaction {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.kaiiv .kaiiv-card {
+    width: 100%;
+    max-height: 100%;
+    overflow: auto;
+    margin: 0;
+    font-size: 0.95rem;
+    text-align: left;
+}
+
+.kaiiv .kaiiv-card .card-body {
+    padding: 0.85rem 1rem;
+}
+
+.kaiiv .kaiiv-card .lead {
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* Upstream draws its own frame and title bar around a poster interaction.
+ * Ours already is one, so theirs is flattened: two borders and two shadows
+ * around one question read as a box inside a box. */
+.kaiiv .h5p-interaction.h5p-poster .h5p-interaction-inner,
+.kaiiv .h5p-interaction.h5p-poster .h5p-interaction-outer {
+    background: transparent;
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+}
+
+/* ---- gaps: typed and dragged --------------------------------------------- */
+.kaiiv .kaiiv-gaps p {
+    line-height: 2.2;
+}
+
+.kaiiv input.kaiiv-gap {
+    display: inline-block;
+    width: 8rem;
+    padding: 0.1rem 0.4rem;
+    vertical-align: baseline;
+}
+
+.kaiiv span.kaiiv-gap {
+    display: inline-block;
+    min-width: 5rem;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    text-align: center;
+    vertical-align: baseline;
+}
+
+.kaiiv span.kaiiv-gap[data-word] {
+    border-color: #0f6cbf !important;
+    color: #0f6cbf !important;
+}
+
+.kaiiv .kaiiv-bank .btn.active {
+    background: #0f6cbf;
+    border-color: #0f6cbf;
+    color: #fff;
+}
+
+/* ---- marking words -------------------------------------------------------- */
+.kaiiv .kaiiv-passage {
+    line-height: 2;
+}
+
+.kaiiv .kaiiv-word {
+    padding: 0.05rem 0.15rem;
+    border-radius: 0.2rem;
+    cursor: pointer;
+}
+
+.kaiiv .kaiiv-word:hover,
+.kaiiv .kaiiv-word:focus {
+    background: #e7f1fb;
+    outline: none;
+}
+
+/* Marked is shown with more than colour, because "marked" and "not marked"
+ * being distinguishable only by hue is a task some learners cannot see. */
+.kaiiv .kaiiv-word.marked {
+    background: #0f6cbf;
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* ---- the dialog button interactions open in ------------------------------ */
+.kaiiv .kaiiv-dialog-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+/* Upstream hides .h5p-dialog-wrapper with display: none and relies on
+ * DragNBar's own script to show it. Ours is shown and hidden with the hidden
+ * attribute, so visible has to be said as well as hidden. */
+.kaiiv .h5p-interactive-video .h5p-dialog-wrapper.kaiiv-dialog-overlay:not([hidden]) {
+    display: block;
+}
+
+.kaiiv .kaiiv-dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 51;
+    width: min(34rem, 90%);
+    max-height: 85%;
+    overflow: auto;
+    transform: translate(-50%, -50%);
+    border-radius: 0.4rem;
+    background: #fff;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
+}
+
+.kaiiv .kaiiv-dialog-inner {
+    padding: 0;
+}
+
+.kaiiv .kaiiv-dialog-inner .kaiiv-card {
+    max-height: none;
+    border: 0;
+    box-shadow: none !important;
+}
+
+/* An image is held to a height that leaves its caption and the Continue
+ * button on screen. .img-fluid caps only the width, and an image with no
+ * intrinsic size — an SVG, or a large photo in a narrow dialog — then grows to
+ * fill it and pushes the way on below the bottom of the video. */
+.kaiiv .kaiiv-interaction[data-type="image"] img {
+    display: block;
+    max-width: 100%;
+    max-height: min(55vh, 16rem);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+
+.kaiiv .kaiiv-dialog-close {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.5rem;
+    padding: 0 0.4rem;
+    border: 0;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+/* hidden has to mean hidden. A display rule on the same element — Bootstrap's
+ * d-flex is the usual one — beats the attribute's default, and the dialog
+ * then sits on screen from page load as an empty white card. */
+.kaiiv .kaiiv-dialog[hidden],
+.kaiiv .kaiiv-dialog-overlay[hidden],
+.kaiiv [data-region="outcome"][hidden],
+.kaiiv .kaiiv-dialog-close[hidden] {
+    display: none !important;
+}
+
+/* ---- a type this player has no renderer for ------------------------------ */
+.kaiiv .kaiiv-unsupported {
+    padding: 0.5rem;
+    background: #fff3cd;
+    color: #664d03;
+}

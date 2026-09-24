@@ -1,0 +1,100 @@
+{{!
+    Results.
+
+    By question first, hardest first, because that table is the only one that
+    says what to go and change. By learner last, because it is the one
+    everybody asks for and it says that some people did better than others.
+}}
+<div class="kaiiv-report" data-region="kaiiv-report">
+
+    <p><a href="{{viewurl}}">{{#str}}backtovideo, mod_kaiiv{{/str}}</a></p>
+
+    {{#nobodyyet}}
+    <div class="alert alert-info">{{#str}}report:nobodyyet, mod_kaiiv{{/str}}</div>
+    {{/nobodyyet}}
+
+    {{^nobodyyet}}
+    <h3>{{#str}}report:byquestion, mod_kaiiv{{/str}}</h3>
+    <p class="text-muted">{{#str}}report:byquestion_help, mod_kaiiv{{/str}}</p>
+
+    <table class="table" data-region="byquestion">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}starttime, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}interactiontext, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:answered, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:correctshare, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:commonestwrong, mod_kaiiv{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#byquestion}}
+            <tr{{#struggled}} class="table-warning"{{/struggled}}>
+                <td><code>{{starttime}}</code></td>
+                <td>
+                    {{question}}
+                    {{#struggled}}
+                    <span class="badge bg-warning text-dark">{{#str}}report:struggled, mod_kaiiv{{/str}}</span>
+                    {{/struggled}}
+                </td>
+                <td>{{answered}}</td>
+                <td>{{#share}}{{share}}%{{/share}}{{^share}}&mdash;{{/share}}</td>
+                <td>{{commonestwrong}}</td>
+            </tr>
+            {{/byquestion}}
+            {{^byquestion}}
+            <tr><td colspan="5">{{#str}}nointeractions, mod_kaiiv{{/str}}</td></tr>
+            {{/byquestion}}
+        </tbody>
+    </table>
+
+    {{#bycategory.0}}
+    <h3>{{#str}}report:bycategory, mod_kaiiv{{/str}}</h3>
+    <p class="text-muted">{{#str}}report:bycategory_help, mod_kaiiv{{/str}}</p>
+
+    <table class="table" data-region="bycategory">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}category, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:answered, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:correctshare, mod_kaiiv{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#bycategory}}
+            <tr>
+                <td>{{category}}</td>
+                <td>{{answered}}</td>
+                <td>{{share}}%</td>
+            </tr>
+            {{/bycategory}}
+        </tbody>
+    </table>
+    {{/bycategory.0}}
+
+    <h3>{{#str}}report:bylearner, mod_kaiiv{{/str}}</h3>
+
+    <table class="table" data-region="bylearner">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}report:learners, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:answered, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:share, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:furthest, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}report:finished, mod_kaiiv{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#bylearner}}
+            <tr>
+                <td>{{name}}</td>
+                <td>{{answered}} / {{total}}</td>
+                <td>{{#share}}{{share}}%{{/share}}{{^share}}&mdash;{{/share}}</td>
+                <td><code>{{furthest}}</code></td>
+                <td>{{#finished}}&check;{{/finished}}</td>
+            </tr>
+            {{/bylearner}}
+        </tbody>
+    </table>
+    {{/nobodyyet}}
+</div>

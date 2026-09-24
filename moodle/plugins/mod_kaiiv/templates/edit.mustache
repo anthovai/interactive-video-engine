@@ -1,0 +1,73 @@
+{{!
+    The timeline editor.
+
+    The video sits above the form because choosing "ask this at 01:24" needs
+    the frame at 01:24, and a separate tab turns that into arithmetic.
+}}
+<div class="kaiiv-edit" data-region="kaiiv-edit">
+
+    <p><a href="{{viewurl}}">{{#str}}backtovideo, mod_kaiiv{{/str}}</a></p>
+
+    {{! The native controls are wanted here, unlike on the player: this page
+        is for scrubbing around to find a frame, and there is nothing on it to
+        skip past. }}
+    {{#isnative}}
+    {{! An HLS playlist too: the same element, with video.js attaching the
+        stream. No src is set for that reason — a browser handed a .m3u8 it
+        cannot decode gives up before the library has had a chance. }}
+    <video class="w-100 mb-3" data-region="preview" controls
+           preload="metadata" src="{{filesrc}}"></video>
+    {{/isnative}}
+    {{^isnative}}
+    <div class="ratio ratio-16x9 mb-3">
+        <iframe data-region="preview" src="{{embedurl}}" title="preview"
+                allow="accelerometer; encrypted-media; picture-in-picture"
+                allowfullscreen></iframe>
+    </div>
+    {{/isnative}}
+
+    {{! Topics already used on this video, offered to the form's text field.
+        Offered rather than enforced: the point is that the same topic does
+        not end up spelled two ways and counted twice in the report. }}
+    <datalist id="kaiiv-categories">
+        {{#categories}}<option value="{{name}}"></option>{{/categories}}
+    </datalist>
+
+    <table class="table" data-region="items">
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}starttime, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}type, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}interactiontext, mod_kaiiv{{/str}}</th>
+                <th scope="col">{{#str}}category, mod_kaiiv{{/str}}</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#items}}
+            <tr data-interaction="{{id}}" data-type="{{type}}">
+                <td><code>{{startlabel}}</code></td>
+                <td>
+                    <span class="badge bg-secondary">{{typelabel}}</span>
+                    {{#pauses}}
+                    {{! Worth showing, because it is the difference between an
+                        interaction a learner must deal with and one they can
+                        watch go by. }}
+                    <span class="badge bg-warning text-dark">{{#str}}stopsvideo, mod_kaiiv{{/str}}</span>
+                    {{/pauses}}
+                </td>
+                <td>{{summary}}</td>
+                <td>{{category}}</td>
+                <td class="text-nowrap">
+                    <a href="{{editurl}}" data-action="edit">{{#str}}edit{{/str}}</a>
+                    &middot;
+                    <a href="{{deleteurl}}" data-action="delete">{{#str}}delete{{/str}}</a>
+                </td>
+            </tr>
+            {{/items}}
+            {{^items}}
+            <tr><td colspan="5">{{#str}}nointeractions, mod_kaiiv{{/str}}</td></tr>
+            {{/items}}
+        </tbody>
+    </table>
+</div>
