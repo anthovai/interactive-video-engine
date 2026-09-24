@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+import subprocess
 import sys
 import zipfile
 
@@ -72,7 +73,27 @@ def newest(paths) -> float:
     return max((p.stat().st_mtime for p in paths if p.is_file()), default=0)
 
 
+def sources_as_committed(paths: list[pathlib.Path]) -> bool:
+    """Whether these sources are exactly what the repository has committed.
+
+    A fresh clone writes files in whatever order git chooses, so their times
+    say nothing about which was built from which; the build that was
+    committed with those sources is the build for them. File times are only
+    evidence once somebody has changed a source, which is the case this
+    check exists for.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "status", "--porcelain", "--", *[str(p) for p in paths]],
+            cwd=REPO, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return out.returncode == 0 and out.stdout.strip() == ""
+
+
 def check_built_output_is_current() -> None:
+    if sources_as_committed([PLUGIN / "amd", PLAYER / "src", PLAYER / "styles", PLUGIN / "styles.css"]):
+        return
     # Each built file against its own sources. backend.js is copied on its own
     # and is an external of the bundle, so a change to it leaves the bundle's
     # content — and webpack leaves an unchanged file unwritten — untouched.
