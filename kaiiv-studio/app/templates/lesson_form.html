@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{% if lesson %}ตั้งค่าบทเรียน{% else %}สร้างบทเรียน{% endif %}{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>{% if lesson %}ตั้งค่าบทเรียน{% else %}สร้างบทเรียน{% endif %}</h1>
+  {% if error %}<div class="notice danger" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" enctype="multipart/form-data"
+        action="{% if lesson %}/lessons/{{ lesson.id }}/settings{% else %}/lessons/new{% endif %}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>ชื่อบทเรียน<input id="title" name="title" value="{{ form.title or '' }}" required maxlength="200"></label>
+    <label>คำอธิบาย<textarea id="description" name="description" rows="2">{{ form.description or '' }}</textarea></label>
+
+    <fieldset>
+      <legend>วิดีโอ</legend>
+      <label class="choice"><input type="radio" name="source" value="upload" {% if form.source == 'upload' %}checked{% endif %}> อัปโหลดไฟล์ (MP4 หรือ WebM)</label>
+      <label class="choice"><input type="radio" name="source" value="url" {% if form.source == 'url' %}checked{% endif %}> ที่อยู่ของไฟล์หรือสตรีม HLS (.m3u8)</label>
+      <label class="choice"><input type="radio" name="source" value="youtube" {% if form.source == 'youtube' %}checked{% endif %}> YouTube</label>
+      <label class="choice"><input type="radio" name="source" value="vimeo" {% if form.source == 'vimeo' %}checked{% endif %}> Vimeo</label>
+      <div data-source="upload">
+        <label>ไฟล์วิดีโอ<input id="videofile" name="videofile" type="file" accept="video/mp4,video/webm,.mp4,.m4v,.webm"></label>
+        {% if lesson and lesson.mediafile %}<p class="muted">มีไฟล์อยู่แล้ว เลือกไฟล์ใหม่ถ้าต้องการเปลี่ยน</p>{% endif %}
+      </div>
+      <div data-source="url youtube vimeo">
+        <label>ที่อยู่<input id="address" name="address" value="{{ form.address or '' }}" placeholder="https://..."></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>การตอบ</legend>
+      <label class="choice"><input type="checkbox" name="mustanswer" value="1" {% if form.mustanswer %}checked{% endif %}> ต้องตอบคำถามก่อนดูต่อ (ข้ามคำถามไม่ได้)</label>
+      <label class="choice"><input type="checkbox" name="allowreview" value="1" {% if form.allowreview %}checked{% endif %}> ให้ตอบใหม่ได้เมื่อตอบผิด</label>
+      <label>จำนวนครั้งที่ตอบได้ (0 = ไม่จำกัด)<input name="maxattempts" type="number" min="0" max="20" value="{{ form.maxattempts or 0 }}"></label>
+    </fieldset>
+
+    <label class="choice"><input id="published" type="checkbox" name="published" value="1" {% if form.published %}checked{% endif %}> เปิดให้ผู้เรียนเห็น</label>
+
+    <div class="actions">
+      <button type="submit" id="savelesson" class="primary">บันทึก</button>
+      <a class="button" href="/">ยกเลิก</a>
+    </div>
+  </form>
+  {% if lesson %}
+  <form method="post" action="/lessons/{{ lesson.id }}/delete" class="danger-zone"
+        onsubmit="return confirm('ลบบทเรียนนี้พร้อมคำถามและคะแนนทั้งหมด? ย้อนกลับไม่ได้');">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" class="danger">ลบบทเรียนนี้</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/lesson-form.js"></script>{% endblock %}

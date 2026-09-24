@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}บทเรียน{% endblock %}
+{% block content %}
+<div class="heading">
+  <h1>บทเรียน</h1>
+  {% if teaching %}<a class="button primary" href="/lessons/new">+ สร้างบทเรียน</a>{% endif %}
+</div>
+{% if not lessons %}
+  <p class="empty">{% if teaching %}ยังไม่มีบทเรียน กด “สร้างบทเรียน” เพื่อเริ่ม{% else %}ยังไม่มีบทเรียนที่เปิดให้เรียน{% endif %}</p>
+{% endif %}
+<ul class="lessons">
+{% for l in lessons %}
+  <li class="card lesson" data-lesson="{{ l.id }}">
+    <div>
+      <h2><a href="/lessons/{{ l.id }}">{{ l.title }}</a></h2>
+      {% if l.description %}<p>{{ l.description }}</p>{% endif %}
+      <p class="muted">
+        {{ l['items'] }} รายการบนไทม์ไลน์
+        {% if teaching %} · {% if l.published %}<span class="badge ok">เปิดให้เรียน</span>{% else %}<span class="badge">ฉบับร่าง</span>{% endif %}
+        {% elif l.finished %} · <span class="badge ok">ดูจบแล้ว</span>
+        {% elif l.furthest %} · ดูถึงนาทีที่ {{ (l.furthest // 60)|int }}:{{ '%02d' % ((l.furthest % 60)|int) }}{% endif %}
+      </p>
+    </div>
+    {% if teaching %}
+    <div class="actions">
+      <a class="button" href="/lessons/{{ l.id }}/edit">คำถาม</a>
+      <a class="button" href="/lessons/{{ l.id }}/settings">ตั้งค่า</a>
+      <a class="button" href="/lessons/{{ l.id }}/report">คะแนน</a>
+    </div>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

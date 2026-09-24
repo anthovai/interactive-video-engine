@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}KAISER Interactive Video{% endblock %}</title>
+<link rel="stylesheet" href="/static/studio.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">KAISER <span>Interactive Video</span></a>
+  {% if user %}
+  <nav>
+    <a href="/">บทเรียน</a>
+    {% if user.role == 'admin' %}<a href="/users">ผู้ใช้</a>{% endif %}
+    <a href="/account">{{ user.name }}</a>
+    <form method="post" action="/logout" class="inline">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="link">ออกจากระบบ</button>
+    </form>
+  </nav>
+  {% endif %}
+</header>
+<main class="{% block mainclass %}narrow{% endblock %}">
+  {% for m in messages %}<div class="notice {{ m.kind }}" role="status">{{ m.message }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

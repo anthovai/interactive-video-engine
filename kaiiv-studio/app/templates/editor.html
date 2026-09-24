@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}คำถามบนวิดีโอ — {{ lesson.title }}{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block content %}
+<div class="heading">
+  <h1>คำถามบนวิดีโอ: {{ lesson.title }}</h1>
+  <div class="actions">
+    <a class="button" href="/lessons/{{ lesson.id }}">ดูแบบผู้เรียน</a>
+    <a class="button" href="/lessons/{{ lesson.id }}/settings">ตั้งค่า</a>
+    <a class="button" href="/lessons/{{ lesson.id }}/report">คะแนน</a>
+  </div>
+</div>
+{% if not lesson.published %}<div class="notice">บทเรียนนี้ยังเป็นฉบับร่าง ผู้เรียนยังไม่เห็น เปิดได้ที่ “ตั้งค่า”</div>{% endif %}
+{% if engine_down %}<div class="notice danger" role="alert">ติดต่อเครื่องยนต์ตรวจคำตอบไม่ได้ ตอนนี้จึงเพิ่มหรือแก้คำถามไม่ได้ สิ่งที่บันทึกไว้แล้วไม่หายไป</div>{% endif %}
+
+<div class="editor">
+  <section class="preview">
+    {% if video.provider in ('file', 'hls') %}
+    <video id="preview" data-provider="{{ video.provider }}" data-src="{{ video.src }}" controls preload="metadata"
+           {% if video.provider == 'file' %}src="{{ video.src }}"{% endif %}></video>
+    <p class="muted">หยุดวิดีโอตรงจุดที่ต้องการ แล้วกด “ใช้เวลาตอนนี้” ในฟอร์ม</p>
+    {% elif video.provider == 'youtube' %}
+    <iframe class="embed" src="https://www.youtube-nocookie.com/embed/{{ video.videoid }}" title="ตัวอย่างวิดีโอ" allowfullscreen></iframe>
+    <p class="muted">ดูเวลาจากตัวเล่น แล้วพิมพ์เป็นวินาทีในฟอร์ม</p>
+    {% elif video.provider == 'vimeo' %}
+    <iframe class="embed" src="https://player.vimeo.com/video/{{ video.videoid.split(':')[0] }}{% if ':' in video.videoid %}?h={{ video.videoid.split(':')[1] }}{% endif %}" title="ตัวอย่างวิดีโอ" allowfullscreen></iframe>
+    <p class="muted">ดูเวลาจากตัวเล่น แล้วพิมพ์เป็นวินาทีในฟอร์ม</p>
+    {% endif %}
+
+    <h2>บนไทม์ไลน์ ({{ rows|length }})</h2>
+    {% if not rows %}<p class="empty">ยังไม่มี เพิ่มรายการแรกจากฟอร์มด้านขวา</p>{% endif %}
+    <table class="timeline" data-region="timeline">
+      {% for row in rows %}
+      <tr data-type="{{ row.type }}" data-start="{{ row.start }}">
+        <td class="time"><button type="button" class="link" data-seek="{{ row.start }}">{{ (row.start // 60)|int }}:{{ '%02d' % ((row.start % 60)|int) }}</button></td>
+        <td><strong>{{ type_labels.get(row.type, row.type) }}</strong>{% if row.label %} · {{ row.label }}{% endif %}
+            <div class="muted clip">{{ row.summary }}</div>
+            {% if row.answered %}<div class="muted">มีคำตอบแล้ว {{ row.answered }} ครั้ง</div>{% endif %}</td>
+        <td class="actions">
+          <a class="button small" href="/lessons/{{ lesson.id }}/edit?edit={{ row.id }}">แก้</a>
+          <form method="post" action="/lessons/{{ lesson.id }}/interactions/{{ row.id }}/delete" class="inline"
+                onsubmit="return confirm('ลบรายการนี้{% if row.answered %}และคำตอบ {{ row.answered }} ครั้งที่มีอยู่{% endif %}?');">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button type="submit" class="small danger">ลบ</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section class="card form">
+    <h2>{% if form.id %}แก้รายการ{% else %}เพิ่มรายการ{% endif %}</h2>
+    {% if error %}<div class="notice danger" role="alert" data-region="formerror">{{ error }}</div>{% endif %}
+    <form method="post" action="/lessons/{{ lesson.id }}/interactions" id="interaction">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="id" value="{{ form.id or '' }}">
+
+      <div class="row">
+        <label>เวลา (วินาที)<input id="starttime" name="starttime" type="number" step="0.1" min="0" value="{{ form.starttime or '' }}" required></label>
+        {% if video.provider in ('file', 'hls') %}<button type="button" id="usetime" class="button">ใช้เวลาตอนนี้</button>{% endif %}
+      </div>
+      <label>ชนิด
+        <select id="type" name="type">
+          {% for kind in (kinds or type_labels.keys()) %}
+          <option value="{{ kind }}" {% if form.type == kind %}selected{% endif %}>{{ type_labels.get(kind, kind) }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>ชื่อสั้นๆ (แสดงบนแถบเวลา)<input id="label" name="label" value="{{ form.label or '' }}" maxlength="200"></label>
+
+      <label data-types="choice multichoice truefalse shorttext blanks dragtext marktheword label">คำถาม / ข้อความ
+        <textarea id="text" name="text" rows="3">{{ form.text or '' }}</textarea></label>
+
+      <div data-types="choice multichoice">
+        <p class="fieldname">ตัวเลือก — ติ๊กข้อที่ถูก <span class="muted" data-types="choice">(ข้อเดียว)</span><span class="muted" data-types="multichoice">(ได้หลายข้อ)</span></p>
+        {% for i in range(max_options) %}
+        <div class="option">
+          <input type="checkbox" id="correct{{ i }}" name="correct{{ i }}" value="1" aria-label="ข้อ {{ i + 1 }} ถูก" {% if form['correct' ~ i] %}checked{% endif %}>
+          <input id="option{{ i }}" name="option{{ i }}" value="{{ form['option' ~ i] or '' }}" placeholder="ตัวเลือกที่ {{ i + 1 }}" aria-label="ตัวเลือกที่ {{ i + 1 }}">
+        </div>
+        {% endfor %}
+      </div>
+
+      <label data-types="truefalse">คำตอบที่ถูก
+        <select id="istrue" name="istrue">
+          <option value="1" {% if form.istrue != '0' %}selected{% endif %}>ถูก</option>
+          <option value="0" {% if form.istrue == '0' %}selected{% endif %}>ผิด</option>
+        </select></label>
+
+      <label data-types="shorttext">คำตอบที่รับได้ (บรรทัดละคำ)
+        <textarea id="accept" name="accept" rows="3">{{ form.accept or '' }}</textarea>
+        <span class="muted">ไม่สนช่องว่างเกินและตัวพิมพ์ใหญ่เล็กภาษาอังกฤษ แต่วรรณยุกต์และสระไทยต้องตรง</span></label>
+
+      <label data-types="blanks dragtext">ประโยค (บรรทัดละประโยค ครอบคำตอบด้วย *)
+        <textarea id="lines" name="lines" rows="4" placeholder="เมืองหลวงของ *ฝรั่งเศส* คือปารีส">{{ form.lines or '' }}</textarea>
+        <span class="muted">หลายคำที่รับได้ คั่นด้วย / เช่น *เวกเตอร์/vector*</span></label>
+
+      <label data-types="marktheword">ข้อความ (ครอบคำที่ต้องเลือกด้วย *)
+        <textarea id="passage" name="passage" rows="3" placeholder="ระบบบันทึก *เหตุการณ์* และ *เวลา*">{{ form.passage or '' }}</textarea></label>
+
+      <label data-types="image link">ที่อยู่ (https://...)<input id="url" name="url" value="{{ form.url or '' }}"></label>
+      <label data-types="image">คำอธิบายรูปสำหรับผู้พิการทางสายตา<input id="alt" name="alt" value="{{ form.alt or '' }}"></label>
+      <label data-types="image">คำบรรยายใต้รูป<input id="caption" name="caption" value="{{ form.caption or '' }}"></label>
+      <label data-types="link">ข้อความของลิงก์<input id="linktitle" name="linktitle" value="{{ form.linktitle or '' }}"></label>
+
+      <label data-types="choice multichoice truefalse shorttext blanks dragtext marktheword">คำอธิบายหลังตอบ
+        <textarea id="feedback" name="feedback" rows="2">{{ form.feedback or '' }}</textarea>
+        <span class="muted">แสดงเมื่อตอบถูก หรือเมื่อหมดสิทธิ์ตอบแล้วเท่านั้น</span></label>
+
+      <details data-types="label image link">
+        <summary>การแสดงบนวิดีโอ</summary>
+        <label>แสดงเป็น
+          <select id="displaytype" name="displaytype">
+            <option value="poster" {% if form.displaytype != 'button' %}selected{% endif %}>แผ่นบนวิดีโอ</option>
+            <option value="button" {% if form.displaytype == 'button' %}selected{% endif %}>ปุ่มให้กดเปิด</option>
+          </select></label>
+        <label>แสดงถึงวินาทีที่<input id="endtime" name="endtime" type="number" step="0.1" min="0" value="{{ form.endtime or '' }}"></label>
+      </details>
+      <details>
+        <summary>ตำแหน่งและขนาด (% ของวิดีโอ)</summary>
+        <div class="row">
+          <label>ซ้าย<input name="x" type="number" min="0" max="100" value="{{ form.x or 20 }}"></label>
+          <label>บน<input name="y" type="number" min="0" max="100" value="{{ form.y or 20 }}"></label>
+          <label>กว้าง<input name="width" type="number" min="5" max="100" value="{{ form.width or 60 }}"></label>
+          <label>สูง<input name="height" type="number" min="5" max="100" value="{{ form.height or 40 }}"></label>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button type="submit" id="saveinteraction" class="primary" {% if engine_down %}disabled{% endif %}>บันทึก</button>
+        {% if form.id %}<a class="button" href="/lessons/{{ lesson.id }}/edit">ยกเลิกการแก้</a>{% endif %}
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/editor.js"></script>{% endblock %}

@@ -1,0 +1,8 @@
+# The studio image needs its own code and the player's built files, and
+# nothing else from the repository — least of all a .env.
+*
+!kaiiv-studio/requirements.txt
+!kaiiv-studio/app/**
+!kaiiv-player/dist/**
+!kaiiv-player/thirdparty/**
+**/__pycache__

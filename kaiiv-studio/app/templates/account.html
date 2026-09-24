@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}บัญชีของฉัน{% endblock %}
+{% block content %}
+<section class="card">
+  <h1>บัญชีของฉัน</h1>
+  <p>{{ user.name }} (<code>{{ user.username }}</code>) — {{ {'admin': 'ผู้ดูแลระบบ', 'teacher': 'ผู้สอน', 'learner': 'ผู้เรียน'}[user.role] }}</p>
+  <h2>เปลี่ยนรหัสผ่าน</h2>
+  {% if error %}<div class="notice danger" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="/account">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>รหัสผ่านปัจจุบัน<input name="current" type="password" autocomplete="current-password" required></label>
+    <label>รหัสผ่านใหม่<input name="new" type="password" autocomplete="new-password" required minlength="10"></label>
+    <p class="muted">อย่างน้อย 10 ตัวอักษร มีตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลข</p>
+    <button type="submit" class="primary">บันทึก</button>
+  </form>
+</section>
+{% endblock %}

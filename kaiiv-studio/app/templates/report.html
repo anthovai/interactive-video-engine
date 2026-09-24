@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}คะแนน — {{ lesson.title }}{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block content %}
+<div class="heading">
+  <h1>คะแนน: {{ lesson.title }}</h1>
+  <div class="actions">
+    <a class="button" href="/lessons/{{ lesson.id }}/report.csv">ดาวน์โหลด CSV</a>
+    <a class="button" href="/lessons/{{ lesson.id }}/edit">คำถาม</a>
+  </div>
+</div>
+{% if not engine_ok %}<div class="notice danger" role="alert">ติดต่อเครื่องยนต์ตรวจคำตอบไม่ได้ คะแนนบางคนจึงคิดไม่ได้ในตอนนี้</div>{% endif %}
+
+<section class="card">
+  <h2>ผู้เรียน</h2>
+  {% if not rows %}<p class="empty">ยังไม่มีผู้เรียนในระบบ</p>{% else %}
+  <table class="grid" data-region="learners">
+    <thead><tr><th>ผู้เรียน</th><th>คะแนน</th><th>ตอบแล้ว</th><th>ดูถึง</th><th>ดูจบ</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr data-username="{{ r.username }}">
+        <td>{{ r.name }} <span class="muted">{{ r.username }}</span></td>
+        <td data-region="score">{% if r.ok %}{{ r.correct }} / {{ r.total }}{% else %}—{% endif %}</td>
+        <td>{{ r.answered }}</td>
+        <td>{{ (r.furthest // 60)|int }}:{{ '%02d' % ((r.furthest % 60)|int) }}</td>
+        <td>{% if r.finished %}✓{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>รายข้อ</h2>
+  {% if not questions %}<p class="empty">บทเรียนนี้ยังไม่มีคำถามที่ให้คะแนน</p>{% else %}
+  <table class="grid">
+    <thead><tr><th>เวลา</th><th>คำถาม</th><th>ตอบแล้ว</th><th>ตอบถูก (ล่าสุด)</th></tr></thead>
+    <tbody>
+    {% for q in questions %}
+      <tr>
+        <td>{{ (q.start // 60)|int }}:{{ '%02d' % ((q.start % 60)|int) }}</td>
+        <td><strong>{{ type_labels.get(q.type, q.type) }}</strong>{% if q.label %} · {{ q.label }}{% endif %}<div class="muted clip">{{ q.text }}</div></td>
+        <td>{{ q.answered }}</td>
+        <td>{{ q.correct }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

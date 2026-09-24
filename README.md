@@ -5,6 +5,7 @@
 
 | โฟลเดอร์ | คืออะไร |
 |---|---|
+| `kaiiv-studio/` | **ระบบสำเร็จรูปที่ไม่ต้องมี Moodle**: สร้างบทเรียน ใส่คำถาม จัดการผู้ใช้ ดูคะแนน รันด้วย `docker compose up` |
 | `kaiiv-player/` | ตัวเล่นสำหรับหน้าเว็บของระบบไหนก็ได้ พัฒนาต่อจาก H5P Interactive Video มีเซิร์ฟเวอร์ตัวอย่างใน `examples/server` |
 | `moodle/plugins/mod_kaiiv/` | ปลั๊กอินกิจกรรม Moodle (4.5 ขึ้นไป) สร้างจาก `kaiiv-player` ตัวเดียวกัน |
 | `kaiiv-service/` | เครื่องยนต์ตรวจคำตอบ (FastAPI) ไม่เก็บข้อมูลใดๆ รันด้วย Docker |
@@ -15,6 +16,7 @@
 
 ## ติดตั้ง
 
+- **ใช้เลยโดยไม่ต้องมี Moodle หรือระบบอื่น**: [`kaiiv-studio/README.md`](kaiiv-studio/README.md)
 - **ใส่ในเว็บของระบบอื่น**: [`kaiiv-player/README.md`](kaiiv-player/README.md)
 - **ติดตั้งใน Moodle**: [`moodle/plugins/mod_kaiiv/INSTALL.md`](moodle/plugins/mod_kaiiv/INSTALL.md)
 
@@ -38,6 +40,10 @@ python moodle/plugins/mod_kaiiv/tools/package.py
 
 ```bash
 cd kaiiv-service && python -m pytest -q
+```
+
+```bash
+cd kaiiv-studio && pip install -r requirements.txt pytest && python -m pytest
 ```
 
 ```bash

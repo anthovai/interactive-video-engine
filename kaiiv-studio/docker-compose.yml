@@ -1,0 +1,52 @@
+# KAISER Interactive Video Studio, with its engine.
+#
+#     cp env.example .env      # and fill in the three secrets
+#     docker compose up -d --build
+#
+# Then open http://127.0.0.1:8300 and sign in as the administrator.
+#
+# Two containers. The studio is the only one with a port; the engine is on
+# the compose network alone, because a browser that could reach it could ask
+# it to mark things. Everything that needs keeping is in the studio-data
+# volume — the database and the uploaded videos. Back that up.
+
+services:
+  kaiiv-service:
+    build: ../kaiiv-service
+    restart: unless-stopped
+    environment:
+      KAIIV_API_KEY: ${KAIIV_API_KEY:?set KAIIV_API_KEY in .env}
+    expose:
+      - "9200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:9200/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  studio:
+    build:
+      context: ..
+      dockerfile: kaiiv-studio/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      kaiiv-service:
+        condition: service_healthy
+    environment:
+      KAIIV_API_KEY: ${KAIIV_API_KEY:?set KAIIV_API_KEY in .env}
+      KAIIV_STUDIO_SECRET: ${KAIIV_STUDIO_SECRET:?set KAIIV_STUDIO_SECRET in .env}
+      KAIIV_ADMIN_USER: ${KAIIV_ADMIN_USER:-admin}
+      KAIIV_ADMIN_PASSWORD: ${KAIIV_ADMIN_PASSWORD:-}
+      KAIIV_ENGINE_URL: http://kaiiv-service:9200
+      KAIIV_SECURE_COOKIES: ${KAIIV_SECURE_COOKIES:-0}
+      KAIIV_MAX_UPLOAD_MB: ${KAIIV_MAX_UPLOAD_MB:-1024}
+    volumes:
+      - studio-data:/data
+    ports:
+      # Loopback by default. To serve other machines, put it behind a reverse
+      # proxy with HTTPS and set KAIIV_SECURE_COOKIES=1, or bind KAIIV_BIND to
+      # a private address.
+      - "${KAIIV_BIND:-127.0.0.1}:${KAIIV_PORT:-8300}:8300"
+
+volumes:
+  studio-data:

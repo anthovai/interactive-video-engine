@@ -350,9 +350,12 @@ def main() -> int:
         page.on("console", lambda m: errors.append(m.text)
                 if m.type == "error" and "favicon" not in m.text else None)
 
-        if not PAGE:
-            page.goto(f"{BASE}/login/index.php")
-            page.fill("#username", "learner")
+        # Moodle's sign-in, or any other page with the same three fields —
+        # the studio's uses them — when KAIIV_LOGIN_URL says where it is.
+        login = os.environ.get("KAIIV_LOGIN_URL") or (None if PAGE else f"{BASE}/login/index.php")
+        if login:
+            page.goto(login)
+            page.fill("#username", os.environ.get("KAIIV_LEARNER_USER", "learner"))
             page.fill("#password", PASSWORD)
             page.click("#loginbtn")
             page.wait_for_load_state("networkidle")

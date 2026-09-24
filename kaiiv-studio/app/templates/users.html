@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}ผู้ใช้{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block content %}
+<h1>ผู้ใช้</h1>
+{% set roles = {'admin': 'ผู้ดูแลระบบ', 'teacher': 'ผู้สอน', 'learner': 'ผู้เรียน'} %}
+<section class="card">
+  <h2>เพิ่มผู้ใช้</h2>
+  <form method="post" action="/users" class="row wrap" id="adduser">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>ชื่อผู้ใช้<input id="new-username" name="username" required maxlength="100" autocomplete="off"></label>
+    <label>ชื่อที่แสดง<input id="new-name" name="name" maxlength="200"></label>
+    <label>บทบาท
+      <select id="new-role" name="role">
+        <option value="learner">ผู้เรียน</option><option value="teacher">ผู้สอน</option><option value="admin">ผู้ดูแลระบบ</option>
+      </select></label>
+    <label>รหัสผ่าน<input id="new-password" name="password" type="password" required minlength="10" autocomplete="new-password"></label>
+    <button type="submit" id="createuser" class="primary">เพิ่ม</button>
+  </form>
+  <p class="muted">รหัสผ่านอย่างน้อย 10 ตัวอักษร มีตัวพิมพ์เล็ก ตัวพิมพ์ใหญ่ และตัวเลข ส่งให้ผู้ใช้ทางช่องทางที่ปลอดภัย</p>
+</section>
+
+<section class="card">
+  <table class="grid" data-region="users">
+    <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>บทบาท</th><th>สถานะ</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr data-username="{{ r.username }}" {% if not r.active %}class="inactive"{% endif %}>
+        <td><code>{{ r.username }}</code></td>
+        <td>{{ r.name }}</td>
+        <td>{% if r.id == user.id %}{{ roles[r.role] }}{% else %}
+          <form method="post" action="/users/{{ r.id }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="role">
+            <select name="role" onchange="this.form.submit()" aria-label="บทบาทของ {{ r.username }}">
+              {% for key, name in roles.items() %}<option value="{{ key }}" {% if r.role == key %}selected{% endif %}>{{ name }}</option>{% endfor %}
+            </select>
+          </form>{% endif %}</td>
+        <td>{% if r.active %}ใช้งาน{% else %}ปิดอยู่{% endif %}</td>
+        <td class="actions">
+          <form method="post" action="/users/{{ r.id }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="password">
+            <input name="password" type="password" placeholder="รหัสผ่านใหม่" minlength="10" required autocomplete="new-password" aria-label="รหัสผ่านใหม่ของ {{ r.username }}">
+            <button type="submit" class="small">ตั้งรหัสผ่าน</button>
+          </form>
+          {% if r.id != user.id %}
+          <form method="post" action="/users/{{ r.id }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="action" value="{% if r.active %}deactivate{% else %}activate{% endif %}">
+            <button type="submit" class="small {% if r.active %}danger{% endif %}">{% if r.active %}ปิดบัญชี{% else %}เปิดบัญชี{% endif %}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

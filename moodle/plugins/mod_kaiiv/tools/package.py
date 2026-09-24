@@ -6,6 +6,8 @@ writes, under dist/ at the repository root:
 
     mod_kaiiv-<release>.zip        uploaded through Moodle's own plugin installer
     kaiiv-service-<version>.zip    the engine, built and run with Docker
+    kaiiv-studio-<version>.zip     the complete system without Moodle: the studio,
+                                   the engine and the player's built files together
 
 Customers install these themselves, on whatever Moodle they already run. So
 the plugin archive has to be exactly what Moodle's installer expects — one top
@@ -31,6 +33,8 @@ PLUGIN = pathlib.Path(__file__).resolve().parent.parent
 REPO = PLUGIN.parents[2]
 ENGINE = REPO / "kaiiv-service"
 PLAYER = REPO / "kaiiv-player"
+STUDIO = REPO / "kaiiv-studio"
+STUDIO_EXCLUDE = ["__pycache__/", ".pytest_cache/", ".env", "reports/"]
 DIST = REPO / "dist"
 
 # Never in a customer's copy. node_modules is the build toolchain; the reset
@@ -162,6 +166,33 @@ def main() -> int:
     files = write_zip(engine_zip, ENGINE, "kaiiv-service", ENGINE_EXCLUDE)
     print(f"wrote {engine_zip.relative_to(REPO)}  ({files} files, "
           f"{engine_zip.stat().st_size // 1024} KB)")
+
+    # The three folders side by side, as the studio's docker-compose.yml
+    # expects: it builds ../kaiiv-service, and its image takes the player from
+    # ../kaiiv-player. Only the player's built files and notices go in — a
+    # customer runs it, they do not build it.
+    version = re.search(r'__version__ = "([^"]+)"',
+                        (STUDIO / "app/__init__.py").read_text(encoding="utf-8")).group(1)
+    top = f"kaiiv-studio-{version}"
+    studio_zip = DIST / f"{top}.zip"
+    with zipfile.ZipFile(studio_zip, "w", zipfile.ZIP_DEFLATED) as archive:
+        count = 0
+        for root, prefix, exclude in ((STUDIO, "kaiiv-studio", STUDIO_EXCLUDE),
+                                      (ENGINE, "kaiiv-service", ENGINE_EXCLUDE),
+                                      (PLAYER / "dist", "kaiiv-player/dist", []),
+                                      (PLAYER / "thirdparty", "kaiiv-player/thirdparty", [])):
+            for path in sorted(root.rglob("*")):
+                relative = path.relative_to(root).as_posix()
+                if path.is_file() and not excluded(relative, exclude):
+                    archive.write(path, f"{top}/{prefix}/{relative}")
+                    count += 1
+        leaked = [n for n in archive.namelist() if n.endswith("/.env") or "node_modules/" in n]
+    if leaked:
+        print("  REFUSING: archive carries " + leaked[0])
+        studio_zip.unlink()
+        return 1
+    print(f"wrote {studio_zip.relative_to(REPO)}  ({count} files, "
+          f"{studio_zip.stat().st_size // 1024} KB)")
     return 0
 
 

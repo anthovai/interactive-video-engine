@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }}{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/player/kaiiv-player.css">
+<meta name="csrf-token" content="{{ csrf }}">
+{% endblock %}
+{% block content %}
+<div class="heading">
+  <h1>{{ lesson.title }}</h1>
+  {% if user.role in ('admin', 'teacher') %}<a class="button" href="/lessons/{{ lesson.id }}/edit">แก้คำถาม</a>{% endif %}
+</div>
+{% if lesson.description %}<p>{{ lesson.description }}</p>{% endif %}
+<div id="lesson" class="player"></div>
+<p class="muted"><span id="score" data-region="score"></span> · บทเรียนนี้มี {{ questions }} คำถาม</p>
+{% endblock %}
+{% block scripts %}
+<script src="/player/kaiiv-player.js"></script>
+<script id="lesson-config" type="application/json">{{ player|tojson }}</script>
+<script src="/static/learn.js" data-lesson="{{ lesson.id }}"></script>
+{% endblock %}
